@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP System — 30-Day Money Control Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px}
+:root{
+  --gold:#C9A84C;--gold-l:#F0D878;--gold-d:#7A6030;
+  --teal:#1FB8A0;--teal-d:#0D6B5E;
+  --crimson:#C94545;--green:#3A9E6F;
+  --ink:#05080D;--ink2:#0B1018;--ink3:#121922;
+  --surface:#171F2D;--surface2:#1D2636;
+  --line:rgba(201,168,76,.15);--line2:rgba(201,168,76,.08);
+  --txt:#EDE8DC;--txt2:rgba(237,232,220,.55);--txt3:rgba(237,232,220,.22);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--ink);color:var(--txt);font-family:'Cormorant Garamond',Georgia,serif;min-height:100vh;overflow-x:hidden}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  position:fixed;top:0;left:0;bottom:0;width:260px;
+  background:var(--ink2);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;z-index:100;
+  overflow-y:auto;
+}
+.sb-logo{padding:1.8rem 1.6rem 1.4rem;border-bottom:1px solid var(--line2)}
+.sb-logo a{text-decoration:none;display:flex;flex-direction:column;gap:.2rem}
+.sb-brand{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.3em;color:var(--gold);text-transform:uppercase}
+.sb-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--txt);line-height:1.2}
+.sb-sub{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase}
+
+/* Day progress pill */
+.sb-day-pill{margin:1.2rem 1.6rem;padding:.75rem 1rem;background:var(--surface);border:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between}
+.sdp-label{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase}
+.sdp-val{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--gold);line-height:1}
+
+.sb-progress{margin:0 1.6rem 1.4rem;height:3px;background:rgba(201,168,76,.1);position:relative}
+.sb-prog-fill{height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold));transition:width .6s var(--ease)}
+
+/* Nav items */
+.sb-nav{padding:.4rem 0;flex:1}
+.sb-section{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.32em;color:var(--txt3);text-transform:uppercase;padding:.9rem 1.6rem .4rem;display:block}
+.sb-item{display:flex;align-items:center;gap:.75rem;padding:.65rem 1.6rem;cursor:pointer;transition:background .2s,color .2s;text-decoration:none;color:var(--txt2);font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;border:none;background:none;width:100%;text-align:left}
+.sb-item:hover{background:rgba(201,168,76,.06);color:var(--txt)}
+.sb-item.active{background:rgba(201,168,76,.1);color:var(--gold);border-right:2px solid var(--gold)}
+.sb-item .si-icon{font-size:.9rem;width:18px;text-align:center;flex-shrink:0}
+.sb-item .si-badge{margin-left:auto;font-size:.48rem;background:var(--gold);color:var(--ink);padding:1px 5px;border-radius:2px;font-weight:500}
+
+.sb-footer{padding:1.2rem 1.6rem;border-top:1px solid var(--line2)}
+.sb-back{display:flex;align-items:center;gap:.6rem;font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.18em;color:var(--txt3);text-decoration:none;text-transform:uppercase;transition:color .2s}
+.sb-back:hover{color:var(--gold)}
+
+/* ── MAIN ── */
+#main{margin-left:260px;min-height:100vh;padding:2.5rem 3rem}
+
+/* Page header */
+.page-hdr{margin-bottom:2.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--line2)}
+.page-tag{font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.35em;color:var(--gold);text-transform:uppercase;margin-bottom:.5rem}
+.page-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;line-height:1.1}
+.page-desc{font-size:1.05rem;font-style:italic;color:var(--txt2);margin-top:.5rem;line-height:1.65;max-width:580px}
+
+/* Panels */
+.panel{background:var(--surface);border:1px solid var(--line2);padding:1.8rem;margin-bottom:1.5rem}
+.panel-title{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.28em;color:var(--gold);text-transform:uppercase;margin-bottom:1.2rem;display:flex;align-items:center;gap:.75rem}
+.panel-title::after{content:'';flex:1;height:1px;background:var(--line2)}
+
+/* ── MODULE: OVERVIEW (day grid) ── */
+.day-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:5px}
+.day-cell{aspect-ratio:1;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.55rem;color:var(--txt3);cursor:pointer;transition:all .2s;position:relative;user-select:none}
+.day-cell:hover{border-color:var(--gold-d);color:var(--txt2)}
+.day-cell.today{border-color:var(--gold);color:var(--gold);box-shadow:0 0 8px rgba(201,168,76,.2)}
+.day-cell.done{background:rgba(31,184,160,.12);border-color:var(--teal-d);color:var(--teal)}
+.day-cell.done::after{content:'✓';position:absolute;font-size:.5rem;top:2px;right:3px}
+.day-cell.missed{background:rgba(201,69,69,.08);border-color:rgba(201,69,69,.2);color:rgba(201,69,69,.5)}
+
+/* Phase labels */
+.phase-row{display:flex;gap:5px;margin-bottom:.3rem;align-items:center}
+.phase-label{font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase;width:80px;flex-shrink:0}
+
+/* ── DAILY CHECKLIST ── */
+.checklist{display:flex;flex-direction:column;gap:.6rem}
+.check-item{display:flex;align-items:flex-start;gap:1rem;padding:.9rem;border:1px solid var(--line2);cursor:pointer;transition:background .2s,border-color .2s;user-select:none}
+.check-item:hover{background:rgba(201,168,76,.04);border-color:var(--gold-d)}
+.check-item.checked{background:rgba(31,184,160,.07);border-color:rgba(31,184,160,.25)}
+.ci-box{width:18px;height:18px;border:1px solid rgba(201,168,76,.3);flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px;transition:all .2s;transform:rotate(45deg)}
+.check-item.checked .ci-box{background:var(--teal);border-color:var(--teal);box-shadow:0 0 8px rgba(31,184,160,.3)}
+.ci-check{font-size:.7rem;color:var(--ink);transform:rotate(-45deg);opacity:0;transition:opacity .2s}
+.check-item.checked .ci-check{opacity:1}
+.ci-text h4{font-size:1rem;font-weight:600;margin-bottom:.2rem}
+.ci-text p{font-size:.9rem;font-style:italic;color:var(--txt2);line-height:1.55}
+
+/* ── PURCHASE LOG ── */
+.purchase-form{display:grid;grid-template-columns:1fr 100px 120px auto;gap:.75rem;align-items:end;margin-bottom:1.2rem}
+.form-group{display:flex;flex-direction:column;gap:.3rem}
+.form-label{font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase}
+.form-input{background:var(--ink2);border:1px solid var(--line2);color:var(--txt);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:.6rem .8rem;outline:none;transition:border-color .2s;width:100%}
+.form-input:focus{border-color:var(--gold-d)}
+.form-select{background:var(--ink2);border:1px solid var(--line2);color:var(--txt);font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.08em;padding:.6rem .8rem;outline:none;cursor:pointer;appearance:none;transition:border-color .2s}
+.form-select:focus{border-color:var(--gold-d)}
+.btn-add{background:linear-gradient(135deg,var(--gold),var(--gold-d));color:var(--ink);font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;border:none;padding:.7rem 1.2rem;cursor:pointer;white-space:nowrap;transition:all .2s;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%)}
+.btn-add:hover{box-shadow:0 8px 24px rgba(201,168,76,.3)}
+
+.purchase-table{width:100%;border-collapse:collapse}
+.purchase-table th{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.25em;color:var(--txt3);text-transform:uppercase;text-align:left;padding:.6rem .8rem;border-bottom:1px solid var(--line2)}
+.purchase-table td{padding:.7rem .8rem;border-bottom:1px solid var(--line2);font-size:.95rem;color:var(--txt2)}
+.purchase-table tr:last-child td{border-bottom:none}
+.purchase-table tr:hover td{background:rgba(201,168,76,.03)}
+.tag-need{color:var(--teal);font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase}
+.tag-want{color:var(--gold);font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase}
+.tag-waste{color:var(--crimson);font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.12em;text-transform:uppercase}
+.del-btn{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:.8rem;transition:color .2s;padding:.2rem .5rem}
+.del-btn:hover{color:var(--crimson)}
+
+/* Spend summary */
+.spend-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line2);margin-top:1.2rem}
+.ss-block{background:var(--surface2);padding:1rem;text-align:center}
+.ss-label{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;margin-bottom:.3rem;display:block}
+.ss-val{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;line-height:1}
+.ss-block.need .ss-val{color:var(--teal)}.ss-block.want .ss-val{color:var(--gold)}.ss-block.waste .ss-val{color:var(--crimson)}
+
+/* ── IMPULSE FILTER ── */
+.filter-gate{border:1px solid var(--line2);padding:1.4rem;margin-bottom:.75rem;position:relative;transition:all .3s}
+.filter-gate.pass{border-color:rgba(31,184,160,.3);background:rgba(31,184,160,.05)}
+.filter-gate.fail{border-color:rgba(201,69,69,.25);background:rgba(201,69,69,.04)}
+.gate-q{font-size:1.1rem;font-weight:600;margin-bottom:1rem;line-height:1.3}
+.gate-btns{display:flex;gap:.6rem}
+.gate-btn{font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;padding:.55rem 1.2rem;border:1px solid var(--line2);background:transparent;color:var(--txt2);cursor:pointer;transition:all .2s}
+.gate-btn:hover{border-color:var(--gold-d);color:var(--gold)}
+.gate-btn.selected-yes{background:rgba(31,184,160,.15);border-color:var(--teal);color:var(--teal)}
+.gate-btn.selected-no{background:rgba(201,69,69,.12);border-color:var(--crimson);color:var(--crimson)}
+.filter-result{padding:1.2rem;text-align:center;font-size:1.1rem;font-weight:600;display:none}
+.filter-result.show{display:block}
+.filter-result.approved{background:rgba(31,184,160,.12);border:1px solid rgba(31,184,160,.3);color:var(--teal)}
+.filter-result.rejected{background:rgba(201,69,69,.1);border:1px solid rgba(201,69,69,.25);color:var(--crimson)}
+.reset-filter{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;background:none;border:1px solid var(--line2);color:var(--txt3);padding:.5rem 1rem;cursor:pointer;margin-top:.75rem;transition:all .2s}
+.reset-filter:hover{border-color:var(--gold-d);color:var(--gold)}
+
+/* ── NO SPEND TRACKER ── */
+.nsd-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.5rem;margin-bottom:1.2rem}
+.nsd-cell{aspect-ratio:1;border:1px solid var(--line2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;gap:.15rem;user-select:none}
+.nsd-cell .day-name{font-family:'DM Mono',monospace;font-size:.44rem;letter-spacing:.15em;color:var(--txt3);text-transform:uppercase}
+.nsd-cell .day-num{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--txt2);line-height:1}
+.nsd-cell:hover{border-color:var(--gold-d)}
+.nsd-cell.nsd-on{background:rgba(31,184,160,.12);border-color:var(--teal);animation:nsdPop .3s var(--ease)}
+.nsd-cell.nsd-on .day-name,.nsd-cell.nsd-on .day-num{color:var(--teal)}
+@keyframes nsdPop{from{transform:scale(.92)}to{transform:scale(1)}}
+.nsd-count{text-align:center;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase}
+.nsd-count strong{color:var(--gold);font-size:1.2rem;font-family:'Bebas Neue',sans-serif;letter-spacing:.05em}
+
+/* ── WEEKLY RESET ── */
+.reset-form{display:flex;flex-direction:column;gap:1.2rem}
+.rf-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.rf-note{font-size:.9rem;font-style:italic;color:var(--txt3);margin-top:.3rem;line-height:1.5}
+.rf-textarea{background:var(--ink2);border:1px solid var(--line2);color:var(--txt);font-family:'Cormorant Garamond',serif;font-size:1rem;padding:.7rem .9rem;outline:none;resize:vertical;min-height:80px;width:100%;transition:border-color .2s;line-height:1.6}
+.rf-textarea:focus{border-color:var(--gold-d)}
+.rf-submit{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;background:linear-gradient(135deg,var(--gold),var(--gold-d));color:var(--ink);border:none;padding:.9rem 2rem;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:all .2s;align-self:flex-start}
+.rf-submit:hover{box-shadow:0 10px 30px rgba(201,168,76,.3)}
+.reset-history{margin-top:1.5rem}
+.rh-entry{border:1px solid var(--line2);padding:1.1rem;margin-bottom:.6rem}
+.rh-date{font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.2em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.6rem}
+.rh-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.rh-field label{font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase;display:block;margin-bottom:.2rem}
+.rh-field p{font-size:.9rem;font-style:italic;color:var(--txt2);line-height:1.5}
+
+/* ── TABS ── */
+.tabs{display:flex;border-bottom:1px solid var(--line2);margin-bottom:1.8rem;gap:0}
+.tab{font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;padding:.75rem 1.4rem;cursor:pointer;color:var(--txt3);border:none;background:none;border-bottom:2px solid transparent;transition:all .2s;margin-bottom:-1px}
+.tab:hover{color:var(--txt2)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line2);margin-bottom:1.5rem}
+.stat{background:var(--surface);padding:1.2rem 1rem;text-align:center}
+.stat-v{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;line-height:1;color:var(--gold);display:block;margin-bottom:.3rem}
+.stat-l{font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.22em;color:var(--txt3);text-transform:uppercase;line-height:1.4}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--surface);border:1px solid var(--line);padding:.9rem 1.4rem;font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.14em;color:var(--txt);z-index:999;transform:translateY(20px);opacity:0;transition:all .4s var(--ease);pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:rgba(31,184,160,.4);background:rgba(31,184,160,.1)}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:3rem;font-style:italic;color:var(--txt3);font-size:1rem}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--ink)}
+::-webkit-scrollbar-thumb{background:var(--gold-d);border-radius:2px}
+
+/* MOBILE */
+@media(max-width:800px){
+  #sidebar{width:100%;height:auto;position:static;flex-direction:row;flex-wrap:wrap;overflow:visible}
+  #main{margin-left:0;padding:1.5rem}
+  .purchase-form{grid-template-columns:1fr 1fr;grid-template-rows:auto auto}
+  .btn-add{grid-column:span 2}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .rf-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="sb-logo">
+    <a href="index.html">
+      <span class="sb-brand">RHINO Labs · MCP</span>
+      <span class="sb-name">Money Control<br>Protocol</span>
+      <span class="sb-sub">30-Day Operating System</span>
+    </a>
+  </div>
+  <div class="sb-day-pill">
+    <span class="sdp-label">Current Day</span>
+    <span class="sdp-val" id="currentDayLabel">1</span>
+  </div>
+  <div class="sb-progress">
+    <div class="sb-prog-fill" id="sidebarProg" style="width:3.3%"></div>
+  </div>
+
+  <nav class="sb-nav">
+    <span class="sb-section">Overview</span>
+    <button class="sb-item active" data-module="overview">
+      <span class="si-icon">📊</span> Dashboard
+    </button>
+
+    <span class="sb-section">Daily Tools</span>
+    <button class="sb-item" data-module="checklist">
+      <span class="si-icon">✓</span> Daily Checklist
+    </button>
+    <button class="sb-item" data-module="log">
+      <span class="si-icon">💳</span> Purchase Log
+    </button>
+    <button class="sb-item" data-module="filter">
+      <span class="si-icon">⚖</span> Impulse Filter
+    </button>
+    <button class="sb-item" data-module="nospend">
+      <span class="si-icon">🚫</span> No Spend Tracker
+    </button>
+
+    <span class="sb-section">Weekly</span>
+    <button class="sb-item" data-module="weekly">
+      <span class="si-icon">🔄</span> Weekly Reset
+    </button>
+
+    <span class="sb-section">Challenge</span>
+    <button class="sb-item" data-module="challenge">
+      <span class="si-icon">🎯</span> 30-Day Board
+    </button>
+  </nav>
+
+  <div class="sb-footer">
+    <a href="index.html" class="sb-back">← Back to Overview</a>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+  <!-- ══ OVERVIEW ══ -->
+  <div id="mod-overview" class="module">
+    <div class="page-hdr">
+      <p class="page-tag">Dashboard</p>
+      <h1 class="page-title">Your Control Center</h1>
+      <p class="page-desc">Track your 30-day journey. Every day logged is a decision made consciously.</p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat"><span class="stat-v" id="ov-day">1</span><span class="stat-l">Current<br>Day</span></div>
+      <div class="stat"><span class="stat-v" id="ov-done">0</span><span class="stat-l">Days<br>Completed</span></div>
+      <div class="stat"><span class="stat-v" id="ov-nsd">0</span><span class="stat-l">No-Spend<br>Days</span></div>
+      <div class="stat"><span class="stat-v" id="ov-saved">€0</span><span class="stat-l">Waste<br>Logged</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">30-Day Progress Board</div>
+      <div id="overview-grid"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Phase Overview</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line2)">
+        <div style="background:var(--surface2);padding:1.2rem">
+          <div style="font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.25em;color:var(--gold);text-transform:uppercase;margin-bottom:.4rem">Phase I · Days 1–7</div>
+          <div style="font-size:1.1rem;font-weight:700;margin-bottom:.4rem">Awareness</div>
+          <div style="font-size:.9rem;font-style:italic;color:var(--txt2);line-height:1.6">Track everything. Label all purchases. Zero judgment — pure data collection.</div>
+        </div>
+        <div style="background:var(--surface2);padding:1.2rem">
+          <div style="font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.25em;color:var(--gold);text-transform:uppercase;margin-bottom:.4rem">Phase II · Days 8–14</div>
+          <div style="font-size:1.1rem;font-weight:700;margin-bottom:.4rem">Control</div>
+          <div style="font-size:.9rem;font-style:italic;color:var(--txt2);line-height:1.6">Daily rules enforced. No-spend days mandatory. 24H delay non-negotiable.</div>
+        </div>
+        <div style="background:var(--surface2);padding:1.2rem">
+          <div style="font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.25em;color:var(--gold);text-transform:uppercase;margin-bottom:.4rem">Phase III · Days 15–30</div>
+          <div style="font-size:1.1rem;font-weight:700;margin-bottom:.4rem">Optimization</div>
+          <div style="font-size:.9rem;font-style:italic;color:var(--txt2);line-height:1.6">Refine every variable. Redirect recovered money. Build the identity.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DAILY CHECKLIST ══ -->
+  <div id="mod-checklist" class="module" style="display:none">
+    <div class="page-hdr">
+      <p class="page-tag">Module 01 · Daily</p>
+      <h1 class="page-title">Daily Checklist</h1>
+      <p class="page-desc">Complete these every day. The streak is the discipline.</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="rules">Daily Rules</button>
+      <button class="tab" data-tab="intentions">Today's Intentions</button>
+    </div>
+
+    <div id="tab-rules">
+      <div class="panel">
+        <div class="panel-title">Today's Three Rules</div>
+        <div class="checklist" id="daily-checklist">
+          <div class="check-item" data-key="rule1">
+            <div class="ci-box"><span class="ci-check">✓</span></div>
+            <div class="ci-text"><h4>24-Hour Delay Rule</h4><p>I applied the 24-hour buffer to every non-essential purchase impulse today. I bought nothing unplanned without waiting.</p></div>
+          </div>
+          <div class="check-item" data-key="rule2">
+            <div class="ci-box"><span class="ci-check">✓</span></div>
+            <div class="ci-text"><h4>No Spend Commitment</h4><p>Today was a No-Spend Day — or I consciously chose to spend and can account for every transaction with a clear reason.</p></div>
+          </div>
+          <div class="check-item" data-key="rule3">
+            <div class="ci-box"><span class="ci-check">✓</span></div>
+            <div class="ci-text"><h4>Impulse Filter Applied</h4><p>Every unplanned purchase passed through the three gates: budgeted, goal-aligned, and able to wait. No exceptions made.</p></div>
+          </div>
+          <div class="check-item" data-key="rule4">
+            <div class="ci-box"><span class="ci-check">✓</span></div>
+            <div class="ci-text"><h4>Purchase Logged</h4><p>All financial transactions from today have been logged in the Purchase Log with proper Need / Want / Waste categorization.</p></div>
+          </div>
+          <div class="check-item" data-key="rule5">
+            <div class="ci-box"><span class="ci-check">✓</span></div>
+            <div class="ci-text"><h4>Day Awareness Check</h4><p>I paused at least once today to consciously think about my financial decisions and whether they aligned with my 30-day goal.</p></div>
+          </div>
+        </div>
+        <div style="margin-top:1.4rem;text-align:right">
+          <button class="btn-add" id="completeDay">Mark Day Complete →</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-intentions" style="display:none">
+      <div class="panel">
+        <div class="panel-title">Today's Financial Intentions</div>
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div class="form-group">
+            <label class="form-label">One financial goal for today</label>
+            <input type="text" class="form-input" id="intent1" placeholder="e.g. Bring lunch instead of buying it">
+          </div>
+          <div class="form-group">
+            <label class="form-label">A potential temptation I'll face today</label>
+            <input type="text" class="form-input" id="intent2" placeholder="e.g. Coffee shop on the way to work">
+          </div>
+          <div class="form-group">
+            <label class="form-label">My planned response to that temptation</label>
+            <input type="text" class="form-input" id="intent3" placeholder="e.g. Bring thermos from home, apply 24H rule if I feel weak">
+          </div>
+          <div class="form-group">
+            <label class="form-label">End of day reflection (fill in tonight)</label>
+            <textarea class="rf-textarea" id="intent4" placeholder="How did today go? What worked, what didn't?"></textarea>
+          </div>
+          <button class="btn-add" id="saveIntentions">Save Today's Intentions</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PURCHASE LOG ══ -->
+  <div id="mod-log" class="module" style="display:none">
+    <div class="page-hdr">
+      <p class="page-tag">Module 01 · Tracking</p>
+      <h1 class="page-title">Purchase Log</h1>
+      <p class="page-desc">Log every transaction. Categorize ruthlessly. Awareness is the first form of control.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Add Transaction</div>
+      <div class="purchase-form">
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <input type="text" class="form-input" id="pur-desc" placeholder="What did you buy?">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount (€)</label>
+          <input type="number" class="form-input" id="pur-amount" placeholder="0.00" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select form-input" id="pur-cat">
+            <option value="need">Need</option>
+            <option value="want">Want</option>
+            <option value="waste">Waste</option>
+          </select>
+        </div>
+        <button class="btn-add" id="addPurchase">Add →</button>
+      </div>
+
+      <div class="spend-summary">
+        <div class="ss-block need"><span class="ss-label">Need</span><span class="ss-val" id="sum-need">€0</span></div>
+        <div class="ss-block want"><span class="ss-label">Want</span><span class="ss-val" id="sum-want">€0</span></div>
+        <div class="ss-block waste"><span class="ss-label">Waste</span><span class="ss-val" id="sum-waste">€0</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Transaction History</div>
+      <div id="purchase-list">
+        <div class="empty">No transactions logged yet. Every purchase logged is awareness gained.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ IMPULSE FILTER ══ -->
+  <div id="mod-filter" class="module" style="display:none">
+    <div class="page-hdr">
+      <p class="page-tag">Module 01 · Tool</p>
+      <h1 class="page-title">Impulse Filter</h1>
+      <p class="page-desc">Before you buy anything unplanned, run it through the three gates. All three must clear.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Purchase Under Review</div>
+      <div class="form-group" style="margin-bottom:1.5rem">
+        <label class="form-label">What do you want to buy?</label>
+        <input type="text" class="form-input" id="filter-item" placeholder="Describe the purchase...">
+      </div>
+
+      <div id="filter-gates">
+        <div class="filter-gate" id="gate1">
+          <p class="gate-q">Gate 1 — Is this purchase budgeted or planned for this week?</p>
+          <div class="gate-btns">
+            <button class="gate-btn" data-gate="1" data-ans="yes">Yes, it is</button>
+            <button class="gate-btn" data-gate="1" data-ans="no">No, it isn't</button>
+          </div>
+        </div>
+        <div class="filter-gate" id="gate2" style="opacity:.35;pointer-events:none">
+          <p class="gate-q">Gate 2 — Does this purchase directly serve an active financial or life goal?</p>
+          <div class="gate-btns">
+            <button class="gate-btn" data-gate="2" data-ans="yes">Yes, it does</button>
+            <button class="gate-btn" data-gate="2" data-ans="no">Not really</button>
+          </div>
+        </div>
+        <div class="filter-gate" id="gate3" style="opacity:.35;pointer-events:none">
+          <p class="gate-q">Gate 3 — Can you wait 24 hours and revisit this decision tomorrow?</p>
+          <div class="gate-btns">
+            <button class="gate-btn" data-gate="3" data-ans="yes">Yes, I can wait</button>
+            <button class="gate-btn" data-gate="3" data-ans="no">I need it now</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-result" id="filter-result"></div>
+      <div style="margin-top:.75rem;display:flex;gap:.75rem">
+        <button class="reset-filter" id="reset-filter">Reset Filter</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Filter Logic</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line2)">
+        <div style="background:var(--surface2);padding:1.1rem"><div style="font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.2em;color:var(--teal);text-transform:uppercase;margin-bottom:.4rem">All Three Pass</div><div style="font-size:.95rem;font-style:italic;color:var(--txt2)">The purchase is pre-approved. Proceed consciously.</div></div>
+        <div style="background:var(--surface2);padding:1.1rem"><div style="font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:.4rem">One or Two Pass</div><div style="font-size:.95rem;font-style:italic;color:var(--txt2)">Apply the 24-hour rule. Come back tomorrow with fresh eyes.</div></div>
+        <div style="background:var(--surface2);padding:1.1rem"><div style="font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.2em;color:var(--crimson);text-transform:uppercase;margin-bottom:.4rem">None Pass</div><div style="font-size:.95rem;font-style:italic;color:var(--txt2)">Do not proceed. This is exactly the purchase the filter was built to stop.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ NO SPEND TRACKER ══ -->
+  <div id="mod-nospend" class="module" style="display:none">
+    <div class="page-hdr">
+      <p class="page-tag">Module 01 · Tool</p>
+      <h1 class="page-title">No-Spend Tracker</h1>
+      <p class="page-desc">Tap a day to mark it as a No-Spend Day. Target: minimum 3 per week in Phase II+.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">This Week</div>
+      <div class="nsd-grid" id="nsd-week"></div>
+      <div class="nsd-count">No-Spend Days this week: <strong id="nsd-week-count">0</strong> / 7 &nbsp;·&nbsp; Total this month: <strong id="nsd-total">0</strong></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">The Rule</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line2)">
+        <div style="background:var(--surface2);padding:1.2rem"><div style="font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.2em;color:var(--teal);text-transform:uppercase;margin-bottom:.4rem">A No-Spend Day means</div><div style="font-size:.96rem;font-style:italic;color:var(--txt2);line-height:1.65">Zero money leaves your account. No exceptions for small amounts. Not a reduction — a full stop.</div></div>
+        <div style="background:var(--surface2);padding:1.2rem"><div style="font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:.4rem">Why it works</div><div style="font-size:.96rem;font-style:italic;color:var(--txt2);line-height:1.65">Total constraint builds the strongest restraint muscle. Partial restrictions train the mind to look for loopholes.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ WEEKLY RESET ══ -->
+  <div id="mod-weekly" class="module" style="display:none">
+    <div class="page-hdr">
+      <p class="page-tag">Module 02 · Weekly</p>
+      <h1 class="page-title">Weekly Reset</h1>
+      <p class="page-desc">Twenty minutes every Sunday. Three steps. Compounding clarity that builds automatically over 30 days.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">This Week's Reset</div>
+      <div class="reset-form">
+        <div class="rf-row">
+          <div class="form-group">
+            <label class="form-label">Total Income This Week (€)</label>
+            <input type="number" class="form-input" id="r-income" placeholder="0.00">
+            <p class="rf-note">All inbound — salary, freelance, passive. Exact figures only.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Total Spending This Week (€)</label>
+            <input type="number" class="form-input" id="r-spend" placeholder="0.00">
+            <p class="rf-note">Sum from your Purchase Log — or calculate manually.</p>
+          </div>
+        </div>
+        <div class="rf-row">
+          <div class="form-group">
+            <label class="form-label">Fixed Costs Reviewed</label>
+            <textarea class="rf-textarea" id="r-fixed" placeholder="List subscriptions, bills, recurring charges you reviewed this week..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Leaks Identified</label>
+            <textarea class="rf-textarea" id="r-leaks" placeholder="Any silent drains you discovered? Forgotten subscriptions, irregular spending..."></textarea>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Biggest Financial Win This Week</label>
+          <input type="text" class="form-input" id="r-win" placeholder="What did you control, avoid, or optimize?">
+        </div>
+        <div class="form-group">
+          <label class="form-label">What to Improve Next Week</label>
+          <textarea class="rf-textarea" id="r-improve" placeholder="One honest observation about where the system broke down or could be stronger..."></textarea>
+        </div>
+        <button class="rf-submit" id="saveReset">Save Weekly Reset →</button>
+      </div>
+    </div>
+
+    <div id="reset-history-wrap">
+      <div class="panel">
+        <div class="panel-title">Reset History</div>
+        <div id="reset-history"><div class="empty">No resets saved yet. Complete your first one above.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 30-DAY BOARD ══ -->
+  <div id="mod-challenge" class="module" style="display:none">
+    <div class="page-hdr">
+      <p class="page-tag">Module 04 · Challenge</p>
+      <h1 class="page-title">30-Day Board</h1>
+      <p class="page-desc">Your complete 30-day journey. Tap any day to mark it complete. Track your streak.</p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat"><span class="stat-v" id="ch-streak">0</span><span class="stat-l">Current<br>Streak</span></div>
+      <div class="stat"><span class="stat-v" id="ch-done">0</span><span class="stat-l">Days<br>Done</span></div>
+      <div class="stat"><span class="stat-v" id="ch-remain">30</span><span class="stat-l">Days<br>Remaining</span></div>
+      <div class="stat"><span class="stat-v" id="ch-phase">I</span><span class="stat-l">Current<br>Phase</span></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Phase I — Awareness (Days 1–7)</div>
+      <div class="day-grid" id="phase1-grid"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Phase II — Control (Days 8–14)</div>
+      <div class="day-grid" id="phase2-grid"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Phase III — Optimization (Days 15–30)</div>
+      <div class="day-grid" id="phase3-grid"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+var S = window.localStorage;
+function get(k){try{return JSON.parse(S.getItem('mcp_'+k))||null}catch(e){return null}}
+function set(k,v){S.setItem('mcp_'+k,JSON.stringify(v))}
+
+/* ── STATE ── */
+var state = {
+  days: get('days') || {},          // day number → 'done'|'missed'
+  purchases: get('purchases') || [],
+  nsd: get('nsd') || {},            // "YYYY-MM-DD" → true
+  resets: get('resets') || [],
+  currentDay: get('currentDay') || 1,
+  checks: get('checks') || {},      // "today_key" → true
+  intentions: get('intentions') || {}
+};
+function save(){
+  set('days',state.days);set('purchases',state.purchases);
+  set('nsd',state.nsd);set('resets',state.resets);
+  set('currentDay',state.currentDay);set('checks',state.checks);
+  set('intentions',state.intentions);
+}
+
+/* ── NAVIGATION ── */
+var modules = document.querySelectorAll('.module');
+var navBtns = document.querySelectorAll('.sb-item');
+var activeModule = 'overview';
+
+function showModule(name){
+  activeModule = name;
+  modules.forEach(function(m){m.style.display='none'});
+  var el = document.getElementById('mod-'+name);
+  if(el) el.style.display='block';
+  navBtns.forEach(function(b){
+    b.classList.toggle('active', b.dataset.module===name);
+  });
+  renderModule(name);
+}
+navBtns.forEach(function(b){
+  b.addEventListener('click',function(){showModule(b.dataset.module)});
+});
+
+/* ── TABS ── */
+document.querySelectorAll('.tab').forEach(function(tab){
+  tab.addEventListener('click',function(){
+    var tgroup = tab.closest('.module').querySelectorAll('.tab');
+    tgroup.forEach(function(t){t.classList.remove('active')});
+    tab.classList.add('active');
+    var tid = tab.dataset.tab;
+    var panels = tab.closest('.module').querySelectorAll('[id^="tab-"]');
+    panels.forEach(function(p){p.style.display='none'});
+    var tp = document.getElementById('tab-'+tid);
+    if(tp) tp.style.display='block';
+  });
+});
+
+/* ── TOAST ── */
+function toast(msg,type){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show'+(type?' '+type:'');
+  setTimeout(function(){t.className='toast'},2800);
+}
+
+/* ── SIDEBAR PROGRESS ── */
+function updateSidebarProgress(){
+  var d = state.currentDay;
+  document.getElementById('currentDayLabel').textContent=d;
+  document.getElementById('sidebarProg').style.width=(d/30*100)+'%';
+}
+
+/* ── RENDER OVERVIEW ── */
+function renderOverview(){
+  updateSidebarProgress();
+  var done = Object.values(state.days).filter(function(v){return v==='done'}).length;
+  var nsdCount = Object.values(state.nsd).filter(Boolean).length;
+  var wasteTotal = state.purchases.filter(function(p){return p.cat==='waste'}).reduce(function(a,p){return a+p.amount},0);
+  document.getElementById('ov-day').textContent=state.currentDay;
+  document.getElementById('ov-done').textContent=done;
+  document.getElementById('ov-nsd').textContent=nsdCount;
+  document.getElementById('ov-saved').textContent='€'+wasteTotal.toFixed(0);
+
+  // Mini grid
+  var g = document.getElementById('overview-grid');
+  g.innerHTML='';
+  var phases=[{label:'Phase I',days:[1,7]},{label:'Phase II',days:[8,14]},{label:'Phase III',days:[15,30]}];
+  phases.forEach(function(ph){
+    var row=document.createElement('div');row.className='phase-row';
+    var lbl=document.createElement('div');lbl.className='phase-label';lbl.textContent=ph.label;
+    var grid=document.createElement('div');grid.style.cssText='display:flex;gap:4px;flex:1;flex-wrap:wrap';
+    for(var d=ph.days[0];d<=ph.days[1];d++){
+      var cell=document.createElement('div');cell.className='day-cell';
+      if(d===state.currentDay)cell.classList.add('today');
+      if(state.days[d]==='done')cell.classList.add('done');
+      if(state.days[d]==='missed')cell.classList.add('missed');
+      cell.textContent=d;cell.style.width='36px';cell.style.height='36px';
+      grid.appendChild(cell);
+    }
+    row.appendChild(lbl);row.appendChild(grid);g.appendChild(row);
+  });
+}
+
+/* ── RENDER CHECKLIST ── */
+function renderChecklist(){
+  var today = new Date().toDateString();
+  document.querySelectorAll('#daily-checklist .check-item').forEach(function(item){
+    var key = today+'_'+item.dataset.key;
+    item.classList.toggle('checked', !!state.checks[key]);
+  });
+}
+
+/* ── CHECKLIST CLICK ── */
+document.querySelectorAll('#daily-checklist .check-item').forEach(function(item){
+  item.addEventListener('click',function(){
+    var today=new Date().toDateString();
+    var key=today+'_'+item.dataset.key;
+    state.checks[key]=!state.checks[key];
+    item.classList.toggle('checked',state.checks[key]);
+    save();
+  });
+});
+
+/* ── COMPLETE DAY ── */
+document.getElementById('completeDay').addEventListener('click',function(){
+  var today=new Date().toDateString();
+  var allKeys=['rule1','rule2','rule3','rule4','rule5'];
+  var allChecked=allKeys.every(function(k){return state.checks[today+'_'+k]});
+  if(!allChecked){toast('Complete all 5 checks before marking the day done.','');return}
+  state.days[state.currentDay]='done';
+  if(state.currentDay<30)state.currentDay++;
+  save();updateSidebarProgress();
+  toast('Day '+( state.currentDay-1)+' complete. Excellent discipline. ✓','success');
+});
+
+/* ── SAVE INTENTIONS ── */
+document.getElementById('saveIntentions').addEventListener('click',function(){
+  var today=new Date().toDateString();
+  state.intentions[today]={
+    goal:document.getElementById('intent1').value,
+    temptation:document.getElementById('intent2').value,
+    response:document.getElementById('intent3').value,
+    reflection:document.getElementById('intent4').value
+  };
+  save();toast('Intentions saved.','success');
+});
+
+/* ── PURCHASE LOG ── */
+function renderPurchaseLog(){
+  var list=document.getElementById('purchase-list');
+  var totals={need:0,want:0,waste:0};
+  state.purchases.forEach(function(p){totals[p.cat]=(totals[p.cat]||0)+p.amount});
+  document.getElementById('sum-need').textContent='€'+totals.need.toFixed(2);
+  document.getElementById('sum-want').textContent='€'+totals.want.toFixed(2);
+  document.getElementById('sum-waste').textContent='€'+totals.waste.toFixed(2);
+
+  if(!state.purchases.length){list.innerHTML='<div class="empty">No purchases logged yet. Start adding transactions above.</div>';return}
+  var html='<table class="purchase-table"><thead><tr><th>Description</th><th>Date</th><th>Amount</th><th>Category</th><th></th></tr></thead><tbody>';
+  var sorted=[].concat(state.purchases).reverse();
+  sorted.forEach(function(p,i){
+    var realIdx=state.purchases.length-1-i;
+    html+='<tr><td>'+p.desc+'</td><td style="font-family:\'DM Mono\',monospace;font-size:.55rem">'+p.date+'</td><td style="font-family:\'DM Mono\',monospace">€'+p.amount.toFixed(2)+'</td><td><span class="tag-'+p.cat+'">'+p.cat.toUpperCase()+'</span></td><td><button class="del-btn" data-idx="'+realIdx+'">✕</button></td></tr>';
+  });
+  html+='</tbody></table>';
+  list.innerHTML=html;
+  list.querySelectorAll('.del-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var idx=parseInt(btn.dataset.idx);
+      state.purchases.splice(idx,1);save();renderPurchaseLog();
+    });
+  });
+}
+
+document.getElementById('addPurchase').addEventListener('click',function(){
+  var desc=document.getElementById('pur-desc').value.trim();
+  var amt=parseFloat(document.getElementById('pur-amount').value);
+  var cat=document.getElementById('pur-cat').value;
+  if(!desc||isNaN(amt)||amt<=0){toast('Enter a description and valid amount.');return}
+  state.purchases.push({desc:desc,amount:amt,cat:cat,date:new Date().toLocaleDateString('en-GB')});
+  save();renderPurchaseLog();
+  document.getElementById('pur-desc').value='';
+  document.getElementById('pur-amount').value='';
+  toast('Transaction logged — '+cat.toUpperCase()+' €'+amt.toFixed(2),'success');
+});
+
+/* ── IMPULSE FILTER ── */
+var gateAnswers={1:null,2:null,3:null};
+
+function evaluateFilter(){
+  var a=gateAnswers;
+  var res=document.getElementById('filter-result');
+  // Gate logic:
+  // Gate 1: budgeted → yes=continue, no=fail (unless gate2 and gate3 both yes)
+  // Gate 3: can wait → no = fail
+  if(a[3]==='no'){
+    res.className='filter-result show rejected';
+    res.innerHTML='<strong>DO NOT PROCEED.</strong><br>Gate 3 failed — you cannot wait. That urgency is the impulse talking, not reason. This purchase does not pass.';
+    return;
+  }
+  var passes=0;
+  if(a[1]==='yes')passes++;
+  if(a[2]==='yes')passes++;
+  if(a[3]==='yes')passes++;
+  if(passes===3){
+    res.className='filter-result show approved';
+    res.innerHTML='<strong>ALL THREE GATES PASSED.</strong><br>This purchase is pre-approved. Proceed consciously and log it in your Purchase Log.';
+  } else if(passes===2){
+    res.className='filter-result show';res.style.background='rgba(201,168,76,.08)';res.style.border='1px solid rgba(201,168,76,.25)';res.style.color='var(--gold)';
+    res.innerHTML='<strong>PARTIAL PASS — Apply 24-Hour Rule.</strong><br>Two gates cleared but not all three. Come back tomorrow. If you still want it with the same clarity, it may be justified.';
+  } else {
+    res.className='filter-result show rejected';
+    res.innerHTML='<strong>DO NOT PROCEED.</strong><br>This purchase failed the filter. It is impulse, not decision. Do not buy it today.';
+  }
+}
+
+document.querySelectorAll('.gate-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var gate=parseInt(btn.dataset.gate);
+    var ans=btn.dataset.ans;
+    gateAnswers[gate]=ans;
+
+    // Style buttons
+    var siblings=btn.parentNode.querySelectorAll('.gate-btn');
+    siblings.forEach(function(s){s.className='gate-btn'});
+    btn.classList.add('selected-'+ans);
+
+    var gateEl=document.getElementById('gate'+gate);
+    gateEl.classList.toggle('pass',ans==='yes');
+    gateEl.classList.toggle('fail',ans==='no');
+
+    // If no at gate 3, evaluate immediately
+    if(gate===3||ans==='no'){
+      evaluateFilter();
+      return;
+    }
+
+    // Unlock next gate
+    var next=document.getElementById('gate'+(gate+1));
+    if(next){next.style.opacity='1';next.style.pointerEvents='auto'}
+
+    // If gate 2 answered, check gate 3 too
+    if(gate===2&&gateAnswers[3]!==null) evaluateFilter();
+    if(gate===1&&ans==='no'){
+      // Still let them through all gates
+    }
+  });
+});
+
+document.getElementById('reset-filter').addEventListener('click',function(){
+  gateAnswers={1:null,2:null,3:null};
+  document.querySelectorAll('.gate-btn').forEach(function(b){b.className='gate-btn'});
+  document.querySelectorAll('.filter-gate').forEach(function(g,i){
+    g.className='filter-gate';g.style.opacity=i===0?'1':'0.35';g.style.pointerEvents=i===0?'auto':'none';
+  });
+  var res=document.getElementById('filter-result');res.className='filter-result';
+  document.getElementById('filter-item').value='';
+});
+
+/* ── NO SPEND TRACKER ── */
+function renderNSD(){
+  var days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var grid=document.getElementById('nsd-week');grid.innerHTML='';
+  var now=new Date();
+  var monday=new Date(now);
+  monday.setDate(now.getDate()-((now.getDay()+6)%7));
+
+  var weekCount=0;
+  for(var i=0;i<7;i++){
+    var d=new Date(monday);d.setDate(monday.getDate()+i);
+    var key=d.toISOString().slice(0,10);
+    var cell=document.createElement('div');cell.className='nsd-cell';
+    if(state.nsd[key])cell.classList.add('nsd-on');
+    cell.innerHTML='<span class="day-name">'+days[i]+'</span><span class="day-num">'+d.getDate()+'</span>';
+    cell.dataset.key=key;
+    cell.addEventListener('click',function(ev){
+      var k=ev.currentTarget.dataset.key;
+      state.nsd[k]=!state.nsd[k];
+      save();renderNSD();
+      if(state.nsd[k])toast('No-Spend Day marked! 🚫','success');
+    });
+    grid.appendChild(cell);
+    if(state.nsd[key])weekCount++;
+  }
+  document.getElementById('nsd-week-count').textContent=weekCount;
+  document.getElementById('nsd-total').textContent=Object.values(state.nsd).filter(Boolean).length;
+}
+
+/* ── WEEKLY RESET ── */
+function renderResetHistory(){
+  var h=document.getElementById('reset-history');
+  if(!state.resets.length){h.innerHTML='<div class="empty">No resets saved yet.</div>';return}
+  var html='';
+  var rev=[].concat(state.resets).reverse();
+  rev.forEach(function(r){
+    html+='<div class="rh-entry"><div class="rh-date">'+r.date+'</div><div class="rh-grid">';
+    html+='<div class="rh-field"><label>Income</label><p>€'+parseFloat(r.income||0).toFixed(2)+'</p></div>';
+    html+='<div class="rh-field"><label>Spending</label><p>€'+parseFloat(r.spend||0).toFixed(2)+'</p></div>';
+    html+='<div class="rh-field"><label>Fixed Costs Reviewed</label><p>'+(r.fixed||'—')+'</p></div>';
+    html+='<div class="rh-field"><label>Leaks Identified</label><p>'+(r.leaks||'—')+'</p></div>';
+    html+='<div class="rh-field"><label>Win This Week</label><p>'+(r.win||'—')+'</p></div>';
+    html+='<div class="rh-field"><label>To Improve</label><p>'+(r.improve||'—')+'</p></div>';
+    html+='</div></div>';
+  });
+  h.innerHTML=html;
+}
+
+document.getElementById('saveReset').addEventListener('click',function(){
+  var r={
+    date:new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'}),
+    income:document.getElementById('r-income').value,
+    spend:document.getElementById('r-spend').value,
+    fixed:document.getElementById('r-fixed').value,
+    leaks:document.getElementById('r-leaks').value,
+    win:document.getElementById('r-win').value,
+    improve:document.getElementById('r-improve').value
+  };
+  state.resets.push(r);save();renderResetHistory();
+  ['r-income','r-spend','r-fixed','r-leaks','r-win','r-improve'].forEach(function(id){document.getElementById(id).value=''});
+  toast('Weekly Reset saved. Clarity compounds. ✓','success');
+});
+
+/* ── 30-DAY BOARD ── */
+function renderChallenge(){
+  var done=Object.values(state.days).filter(function(v){return v==='done'}).length;
+  var remain=30-done;
+  var phase=state.currentDay<=7?'I':state.currentDay<=14?'II':'III';
+
+  // Streak calculation
+  var streak=0;
+  for(var d=state.currentDay-1;d>=1;d--){
+    if(state.days[d]==='done')streak++;else break;
+  }
+
+  document.getElementById('ch-streak').textContent=streak;
+  document.getElementById('ch-done').textContent=done;
+  document.getElementById('ch-remain').textContent=remain;
+  document.getElementById('ch-phase').textContent=phase;
+
+  function buildGrid(containerId,start,end){
+    var g=document.getElementById(containerId);g.innerHTML='';
+    for(var d=start;d<=end;d++){
+      var cell=document.createElement('div');cell.className='day-cell';
+      cell.textContent='D'+d;
+      if(d===state.currentDay)cell.classList.add('today');
+      if(state.days[d]==='done')cell.classList.add('done');
+      if(state.days[d]==='missed')cell.classList.add('missed');
+      cell.dataset.day=d;
+      cell.addEventListener('click',function(ev){
+        var day=parseInt(ev.currentTarget.dataset.day);
+        if(state.days[day]==='done'){delete state.days[day]}
+        else{state.days[day]='done'}
+        save();renderChallenge();renderOverview();
+      });
+      g.appendChild(cell);
+    }
+  }
+  buildGrid('phase1-grid',1,7);
+  buildGrid('phase2-grid',8,14);
+  buildGrid('phase3-grid',15,30);
+}
+
+/* ── RENDER DISPATCH ── */
+function renderModule(name){
+  if(name==='overview')renderOverview();
+  else if(name==='checklist')renderChecklist();
+  else if(name==='log')renderPurchaseLog();
+  else if(name==='nospend')renderNSD();
+  else if(name==='weekly')renderResetHistory();
+  else if(name==='challenge')renderChallenge();
+}
+
+/* ── INIT ── */
+showModule('overview');
+</script>
+</body>
+</html>
