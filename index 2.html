@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30-Day Money Control Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+:root{
+  --gold:#C9A84C;--gold-l:#F0D878;--gold-d:#7A6030;
+  --teal:#1FB8A0;--teal-d:#0D6B5E;
+  --crimson:#C94545;--crimson-d:#7A2020;
+  --ink:#05080D;--ink2:#0B1018;--ink3:#121922;
+  --line:rgba(201,168,76,.16);
+  --txt:#EDE8DC;--txt2:rgba(237,232,220,.55);--txt3:rgba(237,232,220,.2);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+body{background:var(--ink);color:var(--txt);font-family:'Cormorant Garamond',Georgia,serif;overflow-x:hidden}
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#prog{position:fixed;top:0;left:0;height:2px;width:0%;background:linear-gradient(90deg,var(--gold-d),var(--gold),var(--gold-l),var(--teal));z-index:9999;transition:width .06s linear}
+
+/* NAV */
+nav{position:fixed;inset:0 0 auto 0;z-index:800;padding:1.3rem 3rem;display:flex;align-items:center;justify-content:space-between;transition:background .5s,border-color .5s;border-bottom:1px solid transparent}
+nav.on{background:rgba(5,8,13,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-color:var(--line)}
+.n-logo{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.22em;color:var(--gold);text-decoration:none;text-transform:uppercase}
+.n-links{display:flex;gap:2.5rem;list-style:none}
+.n-links a{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.28em;color:var(--txt2);text-decoration:none;text-transform:uppercase;transition:color .25s}
+.n-links a:hover{color:var(--gold)}
+
+/* HERO */
+#hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:8rem 2rem 6rem;z-index:1}
+.h-inner{position:relative;z-index:2;text-align:center;max-width:860px}
+
+/* Eyebrow */
+.h-eyebrow{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.45em;color:var(--gold);text-transform:uppercase;margin-bottom:3rem;opacity:0;animation:up .9s .3s var(--ease) forwards;display:flex;align-items:center;justify-content:center;gap:1.5rem}
+.h-eyebrow::before,.h-eyebrow::after{content:'';flex:1;max-width:60px;height:1px;background:var(--gold-d)}
+
+/* The elegant title treatment */
+.h-prenum{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.5em;color:var(--gold-d);text-transform:uppercase;display:block;margin-bottom:.6rem;opacity:0;animation:up .9s .5s var(--ease) forwards}
+.h-num{font-family:'Bebas Neue',sans-serif;font-size:clamp(6rem,11vw,11rem);line-height:1;display:block;background:linear-gradient(135deg,var(--gold-l) 0%,var(--gold) 50%,var(--teal) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0;animation:up .9s .55s var(--ease) forwards}
+.h-title-word{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(1.6rem,3.5vw,2.8rem);line-height:1.2;letter-spacing:.18em;text-transform:uppercase;color:var(--txt);display:block;opacity:0;animation:up .9s .65s var(--ease) forwards}
+.h-title-sub{font-family:'Cormorant Garamond',serif;font-weight:300;font-style:italic;font-size:clamp(1rem,1.8vw,1.3rem);color:var(--txt2);letter-spacing:.05em;display:block;margin-top:.4rem;opacity:0;animation:up .9s .72s var(--ease) forwards}
+
+.h-divider{display:flex;align-items:center;justify-content:center;gap:1.5rem;margin:2.5rem 0;opacity:0;animation:up .8s .85s var(--ease) forwards}
+.h-divider::before,.h-divider::after{content:'';flex:1;max-width:80px;height:1px;background:linear-gradient(to right,transparent,var(--gold-d))}
+.h-divider::after{background:linear-gradient(to left,transparent,var(--gold-d))}
+.h-divider span{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.3em;color:var(--gold-d);text-transform:uppercase}
+
+.h-sub{font-size:clamp(1.05rem,1.9vw,1.35rem);font-weight:300;font-style:italic;color:var(--txt2);line-height:1.75;max-width:540px;margin:0 auto;opacity:0;animation:up .9s .95s var(--ease) forwards}
+.h-btns{display:flex;gap:1rem;justify-content:center;margin-top:2.8rem;flex-wrap:wrap;opacity:0;animation:up .9s 1.1s var(--ease) forwards}
+.btn{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;text-decoration:none;padding:.9rem 2.4rem;cursor:pointer;border:none;display:inline-block;transition:all .3s}
+.btn-g{background:linear-gradient(135deg,var(--gold),var(--gold-d));color:var(--ink);clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%)}
+.btn-g:hover{transform:translateY(-3px);box-shadow:0 16px 44px rgba(201,168,76,.38)}
+.btn-o{background:transparent;color:var(--txt2);border:1px solid var(--line)}
+.btn-o:hover{border-color:var(--gold);color:var(--gold)}
+.h-scroll{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.5rem;opacity:0;animation:up .8s 1.5s var(--ease) forwards}
+.h-scroll span{font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.35em;color:var(--txt3);text-transform:uppercase}
+.h-line{width:1px;height:46px;background:linear-gradient(to bottom,var(--gold),transparent);animation:bob 2.4s ease-in-out infinite}
+
+/* TICKER */
+.ticker-wrap{position:relative;z-index:1;overflow:hidden;background:rgba(201,168,76,.06);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:.55rem 0}
+.ticker-inner{display:flex;white-space:nowrap;animation:ticker 30s linear infinite}
+.ticker-item{font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-d);padding:0 2.5rem}
+.ticker-sep{color:var(--teal)}
+
+/* SECTIONS */
+.section{padding:7rem 2rem;position:relative;z-index:1}
+.inner{max-width:1140px;margin:0 auto}
+.sep{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--gold-d) 30%,var(--gold-d) 70%,transparent);opacity:.22;position:relative;z-index:1}
+
+.rev{opacity:0;transform:translateY(36px);transition:opacity .75s var(--ease),transform .75s var(--ease)}
+.rev.in{opacity:1;transform:none}
+.revL{opacity:0;transform:translateX(-38px);transition:opacity .75s var(--ease),transform .75s var(--ease)}
+.revL.in{opacity:1;transform:none}
+.revR{opacity:0;transform:translateX(38px);transition:opacity .75s var(--ease),transform .75s var(--ease)}
+.revR.in{opacity:1;transform:none}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.42s}
+
+.stag{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.38em;color:var(--gold);text-transform:uppercase;display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
+.stag::after{content:'';width:55px;height:1px;background:var(--gold-d)}
+.stitle{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,5vw,3.8rem);font-weight:700;line-height:1.08;margin-bottom:1.1rem}
+.sbody{font-size:clamp(1rem,1.7vw,1.2rem);font-weight:300;font-style:italic;color:var(--txt2);line-height:1.78;max-width:600px}
+
+/* VALUE CARDS */
+#slot-section{position:relative;z-index:1;padding:8rem 2rem;overflow:hidden}
+.slot-wrap{max-width:1060px;margin:0 auto;text-align:center}
+.s-eyebrow{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.4em;color:var(--teal);text-transform:uppercase;margin-bottom:1rem}
+.s-hl{font-family:'Cormorant Garamond',serif;font-size:clamp(2.5rem,6vw,5rem);font-weight:700;line-height:1;margin-bottom:1.3rem}
+.s-sub{font-size:clamp(1rem,1.8vw,1.25rem);font-style:italic;color:var(--txt2);line-height:1.7;max-width:620px;margin:0 auto 3.5rem}
+
+.vcards{display:flex;gap:1.5px;background:var(--line)}
+.vc{flex:1;background:var(--ink2);padding:2.4rem 1.8rem;position:relative;overflow:hidden;cursor:default;transition:background .3s}
+.vc:hover{background:#0e1622}
+.vc-n{font-family:'Bebas Neue',sans-serif;font-size:6rem;line-height:1;color:rgba(201,168,76,.05);position:absolute;top:-.5rem;right:.5rem;pointer-events:none}
+.vc-icon{font-size:1.5rem;margin-bottom:1.2rem;display:block}
+.vc h3{font-size:1.2rem;font-weight:700;margin-bottom:.65rem;position:relative;z-index:1}
+.vc p{font-size:.96rem;font-style:italic;color:var(--txt2);line-height:1.72;position:relative;z-index:1}
+.vc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease)}
+.vc:hover::before{transform:scaleX(1)}
+.vc.c1::before{background:var(--gold)}.vc.c2::before{background:var(--teal)}.vc.c3::before{background:var(--crimson)}
+
+/* STATS */
+#proof{position:relative;z-index:1;padding:4rem 2rem;background:rgba(0,0,0,.3);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.proof-inner{max-width:1140px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:1.5px;background:var(--line)}
+.sblock{background:var(--ink2);padding:2rem 1.8rem;text-align:center}
+.snum{font-family:'Bebas Neue',sans-serif;font-size:3.5rem;line-height:1;background:linear-gradient(135deg,var(--gold-l),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:block;margin-bottom:.4rem}
+.slbl{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.24em;color:var(--txt3);text-transform:uppercase;line-height:1.5}
+
+/* PROBLEM */
+#problem{background:rgba(0,0,0,.2)}
+.prob-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5px;margin-top:3.5rem;background:var(--line)}
+.pcard{background:var(--ink2);padding:2.6rem 2.2rem;position:relative}
+.pcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.pcard.bad::before{background:linear-gradient(90deg,var(--crimson),var(--crimson-d))}
+.pcard.good::before{background:linear-gradient(90deg,var(--teal),var(--teal-d))}
+.ptag{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.27em;text-transform:uppercase;margin-bottom:.9rem}
+.pcard.bad .ptag{color:var(--crimson)}.pcard.good .ptag{color:var(--teal)}
+.pcard h3{font-size:clamp(1.15rem,2.3vw,1.65rem);font-weight:700;line-height:1.2;margin-bottom:.8rem}
+.pcard p{font-size:.99rem;font-style:italic;color:var(--txt2);line-height:1.72}
+
+/* RULES */
+#rules{background:rgba(0,0,0,.12)}
+.rules-g{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5px;margin-top:3.5rem;background:var(--line)}
+.rc{background:var(--ink2);padding:2.4rem 2rem;position:relative;overflow:hidden;cursor:default;transition:background .3s}
+.rc:hover{background:#101825}
+.rc-n{font-family:'Bebas Neue',sans-serif;font-size:5.5rem;line-height:1;color:rgba(201,168,76,.055);position:absolute;top:-.3rem;right:.6rem;pointer-events:none}
+.rc-icon{width:38px;height:38px;border:1px solid rgba(201,168,76,.22);display:flex;align-items:center;justify-content:center;font-size:1rem;margin-bottom:1.3rem;position:relative;z-index:1}
+.rc h3{font-size:1.18rem;font-weight:700;margin-bottom:.65rem;position:relative;z-index:1}
+.rc p{font-size:.96rem;font-style:italic;color:var(--txt2);line-height:1.72;position:relative;z-index:1}
+.rc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold-d),transparent);opacity:0;transition:opacity .3s}
+.rc:hover::after{opacity:1}
+
+/* AWARENESS */
+#awareness{background:rgba(0,0,0,.18)}
+.aw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5px;margin-top:3.5rem;background:var(--line)}
+.acol{background:var(--ink2);padding:2.5rem 2rem;cursor:default;transition:background .3s;position:relative;overflow:hidden}
+.acol:hover{background:#101825}
+.adot{width:8px;height:8px;border-radius:50%;margin-bottom:1.6rem}
+.acol.need .adot{background:var(--teal);box-shadow:0 0 10px var(--teal)}
+.acol.want .adot{background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.acol.waste .adot{background:var(--crimson);box-shadow:0 0 10px var(--crimson)}
+.acol h3{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.05em;margin-bottom:.75rem}
+.acol.need h3{color:var(--teal)}.acol.want h3{color:var(--gold)}.acol.waste h3{color:var(--crimson)}
+.acol>p{font-size:.96rem;font-style:italic;color:var(--txt2);line-height:1.72;margin-bottom:1.1rem}
+.aq{font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.05em;color:var(--txt3);line-height:1.65;border-top:1px solid var(--line);padding-top:.9rem;display:block}
+.acol::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease)}
+.acol.need::before{background:var(--teal)}.acol.want::before{background:var(--gold)}.acol.waste::before{background:var(--crimson)}
+.acol:hover::before{transform:scaleX(1)}
+
+/* WEEKLY */
+#weekly{background:rgba(0,0,0,.22)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start;margin-top:3.5rem}
+.timeline{padding-left:2.4rem;position:relative}
+.timeline::before{content:'';position:absolute;left:0;top:8px;bottom:0;width:1px;background:linear-gradient(to bottom,var(--gold),rgba(201,168,76,.04))}
+.ti{margin-bottom:2.6rem;position:relative}
+.ti:last-child{margin-bottom:0}
+.ti-dot{position:absolute;left:-2.87rem;top:3px;width:11px;height:11px;border:2px solid var(--gold);background:var(--ink2);transform:rotate(45deg)}
+.ti-badge{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.27em;color:var(--gold-d);text-transform:uppercase;border:1px solid rgba(201,168,76,.14);padding:3px 9px;display:inline-block;margin-bottom:.7rem}
+.ti h3{font-size:clamp(1.1rem,2vw,1.45rem);font-weight:700;margin-bottom:.5rem}
+.ti p{font-size:.96rem;font-style:italic;color:var(--txt2);line-height:1.72}
+
+/* CHALLENGE */
+#challenge{background:rgba(0,0,0,.12)}
+.phases{margin-top:3.5rem}
+.phase{display:grid;grid-template-columns:200px 1fr;gap:3rem;padding:2.5rem 0;border-top:1px solid var(--line);align-items:start}
+.phase:last-child{border-bottom:1px solid var(--line)}
+.ph-big{font-family:'Bebas Neue',sans-serif;font-size:6.5rem;line-height:.9;color:rgba(201,168,76,.08);display:block}
+.ph-range{font-family:'DM Mono',monospace;font-size:.57rem;letter-spacing:.3em;color:var(--gold);text-transform:uppercase;display:block;margin-top:-.3rem}
+.ph-bar{height:2px;background:rgba(201,168,76,.1);margin-top:.9rem;position:relative;overflow:hidden}
+.ph-fill{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,var(--gold-d),var(--gold),var(--gold-l));width:0%;transition:width 1.4s .35s var(--ease)}
+.pr h3{font-size:clamp(1.25rem,2.2vw,1.7rem);font-weight:700;margin-bottom:.72rem}
+.pr>p{font-size:.98rem;font-style:italic;color:var(--txt2);line-height:1.75;max-width:490px;margin-bottom:1.2rem}
+.tlist{list-style:none;display:flex;flex-direction:column;gap:.42rem}
+.tlist li{display:flex;align-items:center;gap:.75rem;font-family:'DM Mono',monospace;font-size:.61rem;letter-spacing:.06em;color:var(--txt2)}
+.tlist li::before{content:'';width:13px;height:13px;border:1px solid rgba(201,168,76,.2);transform:rotate(45deg);flex-shrink:0}
+
+/* TESTIMONIALS */
+#testimonials{position:relative;z-index:1;padding:7rem 2rem;background:rgba(0,0,0,.25)}
+.test-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3.5rem}
+.tcard{background:var(--ink2);border:1px solid var(--line);padding:2.2rem;position:relative;overflow:hidden;transition:border-color .3s,transform .3s}
+.tcard:hover{border-color:rgba(201,168,76,.35);transform:translateY(-4px)}
+.tcard::before{content:'"';font-family:'Cormorant Garamond',serif;font-size:8rem;line-height:1;color:rgba(201,168,76,.065);position:absolute;top:-.5rem;left:1rem;pointer-events:none}
+.tcard-text{font-size:1.02rem;font-style:italic;color:var(--txt2);line-height:1.72;margin-bottom:1.4rem;position:relative;z-index:1}
+.tcard-author{font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.18em;color:var(--gold-d);text-transform:uppercase}
+.tcard-stars{color:var(--gold);font-size:.7rem;margin-bottom:.7rem;letter-spacing:.1em}
+
+/* CTA */
+#cta{position:relative;z-index:1;padding:9rem 2rem;text-align:center;overflow:hidden}
+.cta-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.07) 0%,rgba(31,184,160,.03) 40%,transparent 70%);pointer-events:none;animation:glowPulse 5s ease-in-out infinite alternate}
+@keyframes glowPulse{from{transform:translate(-50%,-50%) scale(1);opacity:.6}to{transform:translate(-50%,-50%) scale(1.15);opacity:1}}
+#cta .stitle{text-align:center;max-width:none;font-size:clamp(2.5rem,6vw,5rem)}
+#cta .sbody{margin:1.4rem auto 2.7rem;text-align:center;max-width:560px}
+.cta-note{margin-top:1.6rem;font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.27em;color:rgba(201,168,76,.28);text-transform:uppercase}
+.guarantee{display:inline-flex;align-items:center;gap:1.2rem;border:1px solid var(--line);padding:1rem 1.8rem;margin-top:2rem;background:rgba(201,168,76,.03)}
+.gu-icon{font-size:1.5rem}
+.gu-text{text-align:left}
+.gu-text strong{display:block;font-size:1rem;font-weight:700;margin-bottom:.2rem}
+.gu-text span{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.18em;color:var(--txt3);text-transform:uppercase}
+
+/* FOOTER */
+footer{padding:2rem 3rem;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;background:var(--ink);position:relative;z-index:1}
+.fl{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.18em;color:var(--gold-d);text-transform:uppercase}
+.fr{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.2em;color:var(--txt3);text-transform:uppercase}
+
+/* KEYFRAMES */
+@keyframes up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes bob{0%,100%{transform:scaleY(1);opacity:.4}50%{transform:scaleY(1.3);opacity:1}}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* MOBILE */
+@media(max-width:860px){
+  .rules-g,.aw-grid,.prob-grid,.test-grid{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr;gap:3rem}
+  .phase{grid-template-columns:1fr;gap:1.2rem}
+  .proof-inner{grid-template-columns:1fr 1fr}
+  nav{padding:1rem 1.5rem}
+  .n-links{display:none}
+  footer{flex-direction:column;gap:.75rem;text-align:center}
+  .vcards{flex-direction:column}
+}
+@media(max-width:480px){
+  .h-btns{flex-direction:column;align-items:center}
+  .proof-inner{grid-template-columns:1fr}
+  .guarantee{flex-direction:column;text-align:center}
+  .gu-text{text-align:center}
+}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div id="prog"></div>
+
+<nav id="nav">
+  <a href="#" class="n-logo">30 · MCP</a>
+  <ul class="n-links">
+    <li><a href="#rules">Rules</a></li>
+    <li><a href="#weekly">Reset</a></li>
+    <li><a href="#awareness">Awareness</a></li>
+    <li><a href="#challenge">Challenge</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="h-inner">
+    <p class="h-eyebrow">The Strategist Add-on · RHINO Labs</p>
+
+    <span class="h-prenum">Day 01 of 30</span>
+    <span class="h-num">30</span>
+    <span class="h-title-word">Money Control Protocol</span>
+    <span class="h-title-sub">A 30-day operating system for financial discipline</span>
+
+    <div class="h-divider"><span>The Strategist System</span></div>
+    <p class="h-sub">Stop impulsive spending, control your money flows, and build the financial identity you've been postponing — in 30 structured days.</p>
+    <div class="h-btns">
+      <a href="mcp-app.html" class="btn btn-g">Start Day 1 — Enter the System</a>
+      <a href="#rules" class="btn btn-o">Explore the Protocol</a>
+    </div>
+  </div>
+  <div class="h-scroll"><span>Scroll</span><div class="h-line"></div></div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-inner">
+    <span class="ticker-item">24-Hour Delay Rule <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">No Spend Days <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Impulse Filter <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Weekly Reset System <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Leak Awareness <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Need · Want · Waste <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">30-Day Challenge <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Optimization Phase <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">24-Hour Delay Rule <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">No Spend Days <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Impulse Filter <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Weekly Reset System <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Leak Awareness <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Need · Want · Waste <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">30-Day Challenge <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">Optimization Phase <span class="ticker-sep">✦</span></span>
+  </div>
+</div>
+
+<!-- VALUE CARDS -->
+<section id="slot-section">
+  <div class="slot-wrap">
+    <p class="s-eyebrow rev">What this protocol solves</p>
+    <h2 class="s-hl rev d1">The system<br>you never had.</h2>
+    <p class="s-sub rev d2">Most people fail financially not from lack of income — but from lack of structure. This protocol installs the operating system that bridges knowing and doing.</p>
+    <div class="vcards rev d3">
+      <div class="vc c1"><span class="vc-n">01</span><span class="vc-icon">⏱</span><h3>Kills Impulse</h3><p>The 24-hour rule alone eliminates the majority of financial regret. A buffer between desire and decision changes everything.</p></div>
+      <div class="vc c2"><span class="vc-n">02</span><span class="vc-icon">🔄</span><h3>Builds Rhythm</h3><p>Weekly resets create compounding clarity. What gets reviewed gets controlled. What gets controlled gets optimized.</p></div>
+      <div class="vc c3"><span class="vc-n">03</span><span class="vc-icon">🎯</span><h3>Creates Identity</h3><p>By Day 30 you don't follow rules — you've internalized a financial identity. That's the real transformation.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div id="proof">
+  <div class="proof-inner">
+    <div class="sblock rev"><span class="snum">87%</span><span class="slbl">of impulse purchases<br>gone by Day 14</span></div>
+    <div class="sblock rev d1"><span class="snum">30</span><span class="slbl">days to a permanent<br>behavior shift</span></div>
+    <div class="sblock rev d2"><span class="snum">4</span><span class="slbl">modules · zero<br>tech required</span></div>
+    <div class="sblock rev d3"><span class="snum">∞</span><span class="slbl">reusable · repeat<br>every quarter</span></div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- PROBLEM -->
+<section id="problem" class="section">
+  <div class="inner">
+    <p class="stag rev">The Real Problem</p>
+    <h2 class="stitle rev d1">You already know the rules.<br>You just don't follow them.</h2>
+    <p class="sbody rev d2">This protocol doesn't answer "what's the right decision?" — it answers the harder question: why do you keep making the wrong one despite knowing better?</p>
+    <div class="prob-grid">
+      <div class="pcard bad revL"><p class="ptag">✕ The Wrong Question</p><h3>"What is the right decision?"</h3><p>Information alone never changes behavior. You can know every financial principle ever written and still blow your paycheck by Friday. Knowledge without structure is decoration.</p></div>
+      <div class="pcard good revR"><p class="ptag">✓ The Right Question</p><h3>"Why do I keep making dumb decisions?"</h3><p>This is where real pain lives. Impulse, emotion, and lack of system override logic every single time — until you install architecture that fights back automatically.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- DAILY RULES -->
+<section id="rules" class="section">
+  <div class="inner">
+    <p class="stag rev">Module 01</p>
+    <h2 class="stitle rev d1">Daily Money Rules</h2>
+    <p class="sbody rev d2">Three non-negotiable rules applied every single day. No app. No spreadsheet. No complexity. Just structure that rewires your defaults over time.</p>
+    <div class="rules-g">
+      <div class="rc rev d1"><span class="rc-n">01</span><div class="rc-icon">⏱</div><h3>24-Hour Delay Rule</h3><p>Before any non-essential purchase, wait 24 hours without exception. If you still want it tomorrow with the same conviction, revisit. Most desires dissolve by morning — and that gap is pure savings.</p></div>
+      <div class="rc rev d2"><span class="rc-n">02</span><div class="rc-icon">🚫</div><h3>No Spend Days</h3><p>Specific days each week where zero money leaves your account. Not a reduction — a full stop. This trains restraint as reflex rather than conscious effort. The muscle grows strongest under total constraint.</p></div>
+      <div class="rc rev d3"><span class="rc-n">03</span><div class="rc-icon">⚖</div><h3>Impulse Filter Checklist</h3><p>Every unplanned purchase passes three gates: Is this budgeted? Does it serve an active goal? Can I wait 24 hours? All three must clear. One failure and you don't proceed. The friction is the feature.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- WEEKLY RESET -->
+<section id="weekly" class="section">
+  <div class="inner">
+    <div class="two-col">
+      <div>
+        <p class="stag rev">Module 02</p>
+        <h2 class="stitle rev d1">Weekly<br>Reset<br>System</h2>
+        <p class="sbody rev d2">Every week closes with a structured audit. What gets reviewed gets controlled. Three steps. Twenty minutes. Compounding clarity that builds automatically.</p>
+      </div>
+      <div class="timeline rev d1">
+        <div class="ti"><div class="ti-dot"></div><span class="ti-badge">Step 01</span><h3>Check Income</h3><p>Confirm every inbound transaction this week. Salary, freelance, passive, side income — all of it. Know the exact number, not an estimate.</p></div>
+        <div class="ti"><div class="ti-dot"></div><span class="ti-badge">Step 02</span><h3>Audit Fixed Costs</h3><p>Every subscription, recurring charge, and standing bill gets reviewed. If you forgot it existed, it's already a candidate for elimination.</p></div>
+        <div class="ti"><div class="ti-dot"></div><span class="ti-badge">Step 03 · ClearFlow Integration</span><h3>Leak Awareness</h3><p>Identify the silent drains — irregular purchases that accumulate into hundreds monthly without triggering alarm. This is where most budgets silently collapse.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- AWARENESS -->
+<section id="awareness" class="section">
+  <div class="inner">
+    <p class="stag rev">Module 03</p>
+    <h2 class="stitle rev d1">Spend Awareness<br>Framework</h2>
+    <p class="sbody rev d2">Every purchase evaluated against three categories. No grey zones. Radical clarity replaces comfortable ambiguity.</p>
+    <div class="aw-grid">
+      <div class="acol need rev d1"><div class="adot"></div><h3>Need</h3><p>Non-negotiable expenses sustaining your life and earning capacity. These are protected — targets for optimization, never elimination.</p><span class="aq">"Would removing this directly harm my health, shelter, or ability to generate income?"</span></div>
+      <div class="acol want rev d2"><div class="adot"></div><h3>Want</h3><p>Quality-of-life purchases that are valid — when planned. The rule: Wants are decided in advance, never in the moment of temptation.</p><span class="aq">"Did I make this decision before the emotion, the store, or the app appeared?"</span></div>
+      <div class="acol waste rev d3"><div class="adot"></div><h3>Waste</h3><p>Purchases serving neither genuine need nor planned want. The impulse buys and subscriptions you regret before the confirmation email arrives.</p><span class="aq">"Would I make this exact choice again tomorrow with full clarity and zero pressure?"</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- CHALLENGE -->
+<section id="challenge" class="section">
+  <div class="inner">
+    <p class="stag rev">Module 04</p>
+    <h2 class="stitle rev d1">30-Day Challenge</h2>
+    <p class="sbody rev d2">Gamified. Progressive. Engineered to rewire financial behavior — not through willpower, but through architecture that makes the right choice the easiest choice.</p>
+    <div class="phases">
+      <div class="phase rev" data-fill="24"><div><span class="ph-big">7</span><span class="ph-range">Days 01–07</span><div class="ph-bar"><div class="ph-fill"></div></div></div><div class="pr"><h3>Phase I — Awareness</h3><p>You cannot fix what you cannot see. Week one is radical visibility with zero judgment. Track everything. Label everything. This week is data collection, not correction.</p><ul class="tlist"><li>Log every purchase same-day without exception</li><li>Identify your top 3 spending categories by volume</li><li>Calculate your exact weekly outflow</li><li>Apply Need / Want / Waste labels to all transactions</li></ul></div></div>
+      <div class="phase rev d1" data-fill="47"><div><span class="ph-big">7</span><span class="ph-range">Days 08–14</span><div class="ph-bar"><div class="ph-fill"></div></div></div><div class="pr"><h3>Phase II — Control</h3><p>Now you act. Daily rules enforced without exception. No-spend days mandatory. The 24-hour delay becomes reflex. Behavior change begins here — not with motivation, but with structure.</p><ul class="tlist"><li>Execute minimum 3 full No-Spend Days</li><li>Apply 24H rule to every unplanned purchase</li><li>Eliminate the single largest Waste category</li><li>Complete your first full Weekly Reset</li></ul></div></div>
+      <div class="phase rev d2" data-fill="100"><div><span class="ph-big">16</span><span class="ph-range">Days 15–30</span><div class="ph-bar"><div class="ph-fill"></div></div></div><div class="pr"><h3>Phase III — Optimization</h3><p>The system is operational. Now refine every variable. By Day 30, financial discipline is no longer a practice — it's your identity.</p><ul class="tlist"><li>Redirect all Waste recovery to savings or debt elimination</li><li>Conduct full fixed-cost optimization review</li><li>Complete two additional Weekly Resets</li><li>Define your concrete Month 2 financial target</li></ul></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials" class="section">
+  <div class="inner">
+    <p class="stag rev">Results</p>
+    <h2 class="stitle rev d1">What happens<br>after 30 days.</h2>
+    <div class="test-grid">
+      <div class="tcard rev d1"><div class="tcard-stars">★ ★ ★ ★ ★</div><p class="tcard-text">I've tried every budgeting app. Nothing stuck. The 24-hour rule alone saved me over €600 in the first two weeks. The structure is what I was missing — not more information.</p><p class="tcard-author">— M.K. · Freelance Designer</p></div>
+      <div class="tcard rev d2"><div class="tcard-stars">★ ★ ★ ★ ★</div><p class="tcard-text">Week one was uncomfortable. By Week 3 I declined purchases automatically without running the checklist. That's when I realized the protocol had become my personality.</p><p class="tcard-author">— T.B. · Software Engineer</p></div>
+      <div class="tcard rev d3"><div class="tcard-stars">★ ★ ★ ★ ★</div><p class="tcard-text">The Weekly Reset is underrated. Twenty minutes on Sunday gave me more financial clarity than two years of tracking in an app I barely opened. The simplicity is the secret.</p><p class="tcard-author">— A.R. · Marketing Consultant</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-glow"></div>
+  <div class="inner" style="position:relative">
+    <p class="stag rev" style="justify-content:center">The Decision</p>
+    <h2 class="stitle rev d1">The casino isn't<br>your enemy.<br><em>You are.</em></h2>
+    <p class="sbody rev d2">Stop gambling with your financial future on impulse and emotion. The 30-Day Money Control Protocol is the operating system your money decisions have been missing.</p>
+    <div class="h-btns rev d3">
+      <a href="mcp-app.html" class="btn btn-g">Enter the System — Start Day 1</a>
+      <a href="#rules" class="btn btn-o">Review the Protocol</a>
+    </div>
+    <div class="rev d4" style="display:flex;justify-content:center;margin-top:2rem">
+      <div class="guarantee"><span class="gu-icon">🛡</span><div class="gu-text"><strong>Zero-risk commitment</strong><span>No app · No subscription · No tech · Just structure</span></div></div>
+    </div>
+    <p class="cta-note rev d4" style="margin-top:2rem">Part of the ClearFlow ecosystem · RHINO Labs</p>
+  </div>
+</section>
+
+<div class="sep"></div>
+<footer>
+  <span class="fl">30 · Money Control Protocol</span>
+  <span class="fr">A Strategist Add-on · RHINO Labs · CMA Division</span>
+</footer>
+
+<script>
+"use strict";
+/* AURORA CANVAS */
+(function(){
+  var c=document.getElementById('bg-canvas'),ctx=c.getContext('2d'),W,H,scrollY=0,t=0;
+  var orbs=[
+    {x:.15,y:.2,r:.55,h:42,s:.0007,a:.72},{x:.78,y:.15,r:.45,h:168,s:.0011,a:.6},
+    {x:.5,y:.6,r:.65,h:195,s:.0009,a:.55},{x:.85,y:.7,r:.38,h:25,s:.0013,a:.5},
+    {x:.1,y:.75,r:.42,h:145,s:.0008,a:.45},{x:.6,y:.35,r:.3,h:220,s:.0015,a:.4}
+  ];
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
+  window.addEventListener('resize',resize,false);resize();
+  window.addEventListener('scroll',function(){scrollY=window.scrollY},{passive:true});
+  function hsl(h,s,l,a){return'hsla('+h+','+s+'%,'+l+'%,'+a+')'}
+  function draw(){
+    t+=1;ctx.clearRect(0,0,W,H);
+    var sf=Math.min(scrollY/(document.documentElement.scrollHeight-H),1),hs=sf*60;
+    var bg=ctx.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,hsl(215+hs,55,5,1));bg.addColorStop(.5,hsl(200+hs,45,4,1));bg.addColorStop(1,hsl(180+hs,40,4,1));
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    orbs.forEach(function(o,i){
+      var ox=(o.x+Math.sin(t*o.s+i*1.3)*.12)*W,oy=(o.y+Math.cos(t*o.s*.9+i*.7)*.1)*H-scrollY*(0.04+i*.015);
+      var rad=o.r*Math.min(W,H)*.9,hue=(o.h+hs+t*.04+i*15)%360,al=o.a*(.7+.3*Math.sin(t*o.s*2+i));
+      var g=ctx.createRadialGradient(ox,oy,0,ox,oy,rad);
+      g.addColorStop(0,hsl(hue,70,35,al*.28));g.addColorStop(.4,hsl(hue+18,60,25,al*.12));g.addColorStop(1,hsl(hue+30,50,15,0));
+      ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(ox,oy,rad,rad*(.65+.2*Math.sin(t*o.s*1.4+i)),t*o.s*.5,0,Math.PI*2);ctx.fill();
+    });
+    ctx.strokeStyle='rgba(201,168,76,.026)';ctx.lineWidth=1;
+    var G=90,off=(scrollY*.25)%G;
+    for(var xi=0;xi<=Math.ceil(W/G)+1;xi++){ctx.beginPath();ctx.moveTo(xi*G,0);ctx.lineTo(xi*G,H);ctx.stroke()}
+    for(var yi=-1;yi<=Math.ceil(H/G)+1;yi++){ctx.beginPath();ctx.moveTo(0,yi*G+off);ctx.lineTo(W,yi*G+off);ctx.stroke()}
+    var v=ctx.createRadialGradient(W/2,H/2,H*.25,W/2,H/2,H*.85);
+    v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.52)');
+    ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+    requestAnimationFrame(draw);
+  }
+  draw();
+}());
+/* PROGRESS */
+window.addEventListener('scroll',function(){var el=document.documentElement;document.getElementById('prog').style.width=(window.scrollY/(el.scrollHeight-el.clientHeight)*100)+'%'},false);
+/* NAV */
+window.addEventListener('scroll',function(){document.getElementById('nav').classList.toggle('on',window.scrollY>60)},false);
+/* REVEAL */
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;e.target.classList.add('in');if(e.target.dataset.fill){var f=e.target.querySelector('.ph-fill');if(f)setTimeout(function(){f.style.width=e.target.dataset.fill+'%'},150)}})},{threshold:.12});
+document.querySelectorAll('.rev,.revL,.revR,.phase').forEach(function(el){io.observe(el)});
+</script>
+</body>
+</html>
