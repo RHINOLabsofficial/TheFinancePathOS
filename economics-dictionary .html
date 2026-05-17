@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FinLingo — The Duolingo for Finance</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --gold:#D4A94B;--gold2:#F5C842;--gold3:#8B6A20;--gold-bg:rgba(212,169,75,0.12);
+  --bg:#0D0D14;--bg2:#15151F;--bg3:#1E1E2E;--bg4:#27273A;--bg5:#303048;
+  --text:#F2EFE8;--text2:#9B96AB;--text3:#5C5870;
+  --border:rgba(212,169,75,0.18);--border2:rgba(212,169,75,0.35);
+  --green:#4CAF82;--green-bg:rgba(76,175,130,0.12);--green-border:rgba(76,175,130,0.4);
+  --red:#E85555;--red-bg:rgba(232,85,85,0.1);--red-border:rgba(232,85,85,0.35);
+  --purple:#8B5CF6;--purple-bg:rgba(139,92,246,0.12);
+  --blue:#3B9EE8;--blue-bg:rgba(59,158,232,0.1);
+  --nav-h:72px;
+  --radius:16px;--radius-sm:10px;--radius-lg:20px;
+}
+html,body{height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text)}
+.app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;position:relative;background:var(--bg);box-shadow:0 0 80px rgba(0,0,0,0.8)}
+
+/* ─── SCREENS ─── */
+.screens{flex:1;overflow:hidden;position:relative}
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:none;flex-direction:column;padding-bottom:var(--nav-h)}
+.screen.active{display:flex}
+.screen::-webkit-scrollbar{width:0}
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav{
+  position:relative;z-index:50;height:var(--nav-h);
+  background:var(--bg2);border-top:1px solid var(--border);
+  display:flex;align-items:stretch;flex-shrink:0;
+}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:all .15s;position:relative;border:none;background:transparent;color:var(--text3);padding:0}
+.nav-tab:hover{color:var(--text2)}
+.nav-tab.active{color:var(--gold)}
+.nav-tab .n-icon{font-size:22px;line-height:1}
+.nav-tab .n-label{font-size:10px;font-weight:700;letter-spacing:.5px;font-family:'Nunito',sans-serif}
+.nav-tab.active::before{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--gold);border-radius:0 0 3px 3px}
+
+/* ─── SHARED ─── */
+.page-header{padding:20px 20px 12px;flex-shrink:0}
+.page-title{font-family:'Nunito',sans-serif;font-size:22px;font-weight:900;color:var(--text)}
+.page-sub{font-size:13px;color:var(--text2);margin-top:3px}
+.section-label{font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:0 20px;margin:16px 0 10px}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700}
+.pill-gold{background:var(--gold-bg);color:var(--gold);border:1px solid var(--border)}
+.pill-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.pill-purple{background:var(--purple-bg);color:var(--purple)}
+.pill-blue{background:var(--blue-bg);color:var(--blue)}
+
+/* ─── HOME SCREEN ─── */
+.home-hero{
+  background:linear-gradient(160deg,var(--bg2) 0%,var(--bg3) 100%);
+  border-bottom:1px solid var(--border);
+  padding:20px 20px 22px;flex-shrink:0;
+}
+.hero-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.hero-brand{font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;color:var(--gold);letter-spacing:-.3px}
+.hero-streak{display:flex;align-items:center;gap:6px;background:var(--bg4);border-radius:99px;padding:6px 12px;border:1px solid var(--border)}
+.streak-fire{font-size:16px}
+.streak-count{font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;color:var(--gold)}
+.hero-greeting{font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;margin-bottom:4px}
+.hero-sub{font-size:13px;color:var(--text2);margin-bottom:16px}
+.xp-block{background:var(--bg4);border-radius:var(--radius-sm);padding:12px 14px;border:1px solid var(--border)}
+.xp-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.xp-badge{font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;color:var(--gold)}
+.xp-num{font-size:11px;color:var(--text3)}
+.xp-track{height:8px;background:var(--bg);border-radius:99px;overflow:hidden}
+.xp-bar{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold2));border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+/* DAILY GOAL */
+.daily-card{
+  margin:12px 20px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:14px;flex-shrink:0;
+}
+.daily-icon{width:48px;height:48px;border-radius:50%;background:var(--gold-bg);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.daily-info{flex:1}
+.daily-title{font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;margin-bottom:3px}
+.daily-sub{font-size:12px;color:var(--text2)}
+.daily-track{height:6px;background:var(--bg4);border-radius:99px;overflow:hidden;margin-top:8px}
+.daily-fill{height:100%;background:var(--green);border-radius:99px;transition:width .4s}
+.start-btn{background:var(--gold);color:#0D0D14;border:none;border-radius:var(--radius-sm);padding:10px 16px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:900;cursor:pointer;flex-shrink:0;transition:transform .1s}
+.start-btn:active{transform:scale(.95)}
+
+/* PATHS */
+.path-wrap{padding:0 20px;display:flex;flex-direction:column;gap:10px;padding-bottom:12px}
+.path-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;
+}
+.path-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.path-card:active{transform:scale(.98)}
+.path-glow{position:absolute;top:0;right:0;width:80px;height:80px;border-radius:0 var(--radius) 0 100%;opacity:.07}
+.path-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.path-emoji{width:40px;height:40px;background:var(--bg4);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.path-info{flex:1}
+.path-name{font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;margin-bottom:2px}
+.path-desc{font-size:11px;color:var(--text2);line-height:1.4}
+.path-bar{height:5px;background:var(--bg4);border-radius:99px;overflow:hidden}
+.path-fill{height:100%;border-radius:99px}
+.path-meta{display:flex;justify-content:space-between;align-items:center;margin-top:7px}
+.path-lessons{font-size:11px;color:var(--text3)}
+.path-pct{font-size:11px;font-weight:700}
+
+/* CATEGORY TABS */
+.cat-tabs{display:flex;gap:8px;padding:0 20px;overflow-x:auto;flex-shrink:0;margin-bottom:4px}
+.cat-tabs::-webkit-scrollbar{height:0}
+.cat-tab{flex-shrink:0;padding:8px 16px;border-radius:99px;border:1.5px solid var(--border);background:transparent;color:var(--text2);font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;transition:all .15s}
+.cat-tab.active{background:var(--gold);color:#0D0D14;border-color:var(--gold)}
+.cat-tab:hover:not(.active){border-color:var(--border2);color:var(--text)}
+
+/* ─── LEARN (UNIT MAP) ─── */
+.unit-header{padding:20px 20px 0;flex-shrink:0}
+.unit-chapter{margin:0 20px 20px;background:var(--bg3);border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border)}
+.chapter-banner{padding:16px 18px;display:flex;align-items:center;gap:12px}
+.chapter-icon{font-size:24px}
+.chapter-title{font-family:'Nunito',sans-serif;font-size:14px;font-weight:900}
+.chapter-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.unit-map{padding:12px 18px 18px;display:flex;flex-direction:column;align-items:center;gap:0}
+.unit-node-row{display:flex;justify-content:center;margin-bottom:0}
+.unit-node{
+  width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:24px;cursor:pointer;transition:all .18s;position:relative;border:3px solid transparent;
+  margin:6px 8px;
+}
+.unit-node.done{background:var(--green);box-shadow:0 4px 16px rgba(76,175,130,.35)}
+.unit-node.done:hover{transform:scale(1.08)}
+.unit-node.current{background:var(--gold);box-shadow:0 4px 20px rgba(212,169,75,.5);animation:pulse 2s infinite}
+.unit-node.current:hover{transform:scale(1.08)}
+.unit-node.locked{background:var(--bg4);cursor:not-allowed;opacity:.5}
+.unit-node .node-check{position:absolute;bottom:-2px;right:-2px;width:18px;height:18px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px}
+@keyframes pulse{0%,100%{box-shadow:0 4px 20px rgba(212,169,75,.5)}50%{box-shadow:0 4px 32px rgba(212,169,75,.8)}}
+.chest-node{width:72px;height:72px;background:var(--bg4);border:3px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:8px auto;cursor:pointer}
+
+/* ─── QUIZ SCREEN ─── */
+.quiz-screen{display:none;position:fixed;inset:0;z-index:100;background:var(--bg);flex-direction:column;max-width:480px;margin:0 auto}
+.quiz-screen.active{display:flex}
+.quiz-header{padding:14px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border)}
+.q-close{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:none;color:var(--text2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.q-close:hover{background:var(--bg4)}
+.q-progress{flex:1;height:10px;background:var(--bg3);border-radius:99px;overflow:hidden}
+.q-prog-fill{height:100%;background:linear-gradient(90deg,var(--gold3),var(--gold2));border-radius:99px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+.q-lives{display:flex;gap:3px;font-size:15px;flex-shrink:0}
+.quiz-body{flex:1;overflow-y:auto;padding:20px 16px 0}
+.quiz-body::-webkit-scrollbar{width:0}
+.q-type-label{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
+.convo-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:18px}
+.convo-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+.convo{display:flex;flex-direction:column;gap:10px}
+.bubble-row{display:flex;gap:8px;align-items:flex-end}
+.bubble-row.right{flex-direction:row-reverse}
+.avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;font-family:'Nunito',sans-serif;flex-shrink:0}
+.av-a{background:rgba(212,169,75,.2);color:var(--gold)}
+.av-b{background:rgba(139,92,246,.2);color:var(--purple)}
+.bubble{background:var(--bg3);border-radius:14px;padding:10px 13px;font-size:13px;line-height:1.5;max-width:82%}
+.bubble .hl{color:var(--gold2);font-weight:700;border-bottom:2px dashed var(--gold3)}
+.q-prompt{font-family:'Nunito',sans-serif;font-size:17px;font-weight:900;line-height:1.35;margin-bottom:16px;color:var(--text)}
+.choices-list{display:flex;flex-direction:column;gap:10px;padding-bottom:16px}
+.choice-btn{
+  background:var(--bg2);border:2px solid var(--bg4);border-radius:var(--radius);
+  padding:14px 16px;font-size:14px;color:var(--text);text-align:left;cursor:pointer;
+  font-family:'DM Sans',sans-serif;line-height:1.4;transition:all .15s;width:100%;
+}
+.choice-btn:hover:not(:disabled){border-color:var(--gold);background:var(--gold-bg)}
+.choice-btn:disabled{cursor:default}
+.choice-btn.correct{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.choice-btn.wrong{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+.choice-letter{display:inline-flex;width:26px;height:26px;border-radius:8px;background:var(--bg4);align-items:center;justify-content:center;font-size:11px;font-weight:800;font-family:'Nunito',sans-serif;margin-right:10px;flex-shrink:0;vertical-align:middle;transition:all .15s}
+.choice-btn.correct .choice-letter{background:var(--green);color:#fff}
+.choice-btn.wrong .choice-letter{background:var(--red);color:#fff}
+
+.quiz-footer{flex-shrink:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 16px 20px}
+.feedback-box{border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;display:none}
+.feedback-box.show{display:block}
+.feedback-box.ok{background:var(--green-bg);border:1.5px solid var(--green-border)}
+.feedback-box.fail{background:var(--red-bg);border:1.5px solid var(--red-border)}
+.fb-title{font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;margin-bottom:4px}
+.feedback-box.ok .fb-title{color:var(--green)}
+.feedback-box.fail .fb-title{color:var(--red)}
+.fb-detail{font-size:12px;color:var(--text2);line-height:1.5}
+.q-action-btn{width:100%;padding:16px;border-radius:var(--radius);border:none;font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;cursor:pointer;transition:all .15s;letter-spacing:.3px}
+.btn-skip{background:var(--bg3);color:var(--text2)}
+.btn-check{background:var(--bg4);color:var(--text3);cursor:not-allowed}
+.btn-check.ready{background:var(--gold);color:#0D0D14;cursor:pointer}
+.btn-check.ready:hover{background:var(--gold2)}
+.btn-next-ok{background:var(--green);color:#fff}
+.btn-next-fail{background:var(--red);color:#fff}
+
+/* RESULT OVERLAY */
+.result-screen{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;padding:24px;max-width:480px;margin:0 auto}
+.result-screen.active{display:flex}
+.result-trophy{font-size:80px;margin-bottom:16px;animation:bounceIn .5s ease}
+@keyframes bounceIn{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.result-title{font-family:'Nunito',sans-serif;font-size:28px;font-weight:900;text-align:center;margin-bottom:6px}
+.result-sub{font-size:14px;color:var(--text2);text-align:center;margin-bottom:28px}
+.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;margin-bottom:24px}
+.r-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 10px;text-align:center}
+.r-stat-val{font-family:'Nunito',sans-serif;font-size:26px;font-weight:900;color:var(--gold)}
+.r-stat-label{font-size:11px;color:var(--text3);margin-top:3px}
+.result-btns{display:flex;flex-direction:column;gap:10px;width:100%}
+.btn-continue{width:100%;padding:16px;border-radius:var(--radius);border:none;background:var(--gold);color:#0D0D14;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;cursor:pointer}
+.btn-again{width:100%;padding:14px;border-radius:var(--radius);border:2px solid var(--border2);background:transparent;color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
+
+/* ─── LEXICON SCREEN ─── */
+.lex-search-wrap{padding:12px 20px;flex-shrink:0;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid var(--border)}
+.lex-search{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--radius);padding:11px 16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none}
+.lex-search::placeholder{color:var(--text3)}
+.lex-search:focus{border-color:var(--gold)}
+.lex-filters{display:flex;gap:8px;padding:12px 20px 4px;overflow-x:auto;flex-shrink:0}
+.lex-filters::-webkit-scrollbar{height:0}
+.lex-filter{flex-shrink:0;padding:6px 14px;border-radius:99px;border:1.5px solid var(--border);background:transparent;color:var(--text2);font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;cursor:pointer;transition:all .15s}
+.lex-filter.active{background:var(--gold);color:#0D0D14;border-color:var(--gold)}
+.lex-count{padding:8px 20px 4px;font-size:11px;color:var(--text3)}
+.term-list{display:flex;flex-direction:column;gap:0;padding:0 12px 12px}
+.term-item{background:var(--bg2);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;border:1.5px solid var(--border);cursor:pointer;transition:border-color .15s}
+.term-item:hover{border-color:var(--border2)}
+.term-item.open{border-color:var(--gold)}
+.term-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.term-name{font-family:'Nunito',sans-serif;font-size:14px;font-weight:900}
+.term-right{display:flex;align-items:center;gap:8px}
+.cat-chip{font-size:9px;font-weight:800;letter-spacing:.8px;padding:3px 8px;border-radius:99px;text-transform:uppercase}
+.cat-macro{background:rgba(59,158,232,.12);color:var(--blue)}
+.cat-markets{background:rgba(139,92,246,.12);color:var(--purple)}
+.cat-banking{background:rgba(212,169,75,.12);color:var(--gold)}
+.cat-corporate{background:rgba(232,85,85,.1);color:var(--red)}
+.cat-risk{background:rgba(76,175,130,.1);color:var(--green)}
+.cat-trading{background:rgba(245,200,66,.12);color:var(--gold2)}
+.chevron{font-size:14px;color:var(--text3);transition:transform .2s}
+.term-item.open .chevron{transform:rotate(180deg)}
+.term-body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.term-item.open .term-body{max-height:500px}
+.term-body-inner{padding:0 16px 14px;border-top:1px solid var(--border)}
+.term-short{font-size:12px;color:var(--text2);padding-top:4px;padding-bottom:0;padding-left:0}
+.term-def{font-size:13px;color:var(--text);line-height:1.6;padding-top:12px}
+.term-ex{font-size:12px;color:var(--text2);font-style:italic;margin-top:10px;padding:10px 13px;background:var(--bg3);border-radius:var(--radius-sm);border-left:2px solid var(--gold3);line-height:1.5}
+
+/* ─── BADGES SCREEN ─── */
+.profile-top{padding:24px 20px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.profile-avatar-row{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.profile-avatar{width:72px;height:72px;border-radius:50%;background:var(--gold-bg);border:3px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0}
+.profile-name{font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;margin-bottom:2px}
+.profile-title{font-size:13px;color:var(--gold)}
+.profile-since{font-size:11px;color:var(--text3);margin-top:2px}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.p-stat{background:var(--bg3);border-radius:var(--radius-sm);padding:12px;text-align:center}
+.p-stat-val{font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;color:var(--gold)}
+.p-stat-label{font-size:10px;color:var(--text3);margin-top:2px}
+.current-rank-card{margin:16px 20px;background:var(--bg2);border:1.5px solid var(--border2);border-radius:var(--radius-lg);padding:18px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.rank-badge-big{width:64px;height:64px;border-radius:50%;background:var(--gold-bg);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0}
+.rank-level{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:3px}
+.rank-name{font-family:'Nunito',sans-serif;font-size:18px;font-weight:900;margin-bottom:3px}
+.rank-desc{font-size:12px;color:var(--text2)}
+.rank-next{font-size:11px;color:var(--text3);margin-top:5px}
+.badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 20px 12px}
+.b-tile{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 8px;text-align:center;transition:all .2s}
+.b-tile.unlocked{border-color:var(--border2)}
+.b-tile.locked{opacity:.35}
+.b-tile-icon{font-size:28px;margin-bottom:7px}
+.b-tile-name{font-family:'Nunito',sans-serif;font-size:10px;font-weight:900;margin-bottom:2px;color:var(--text)}
+.b-tile-xp{font-size:9px;color:var(--text3)}
+.heatmap-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;padding:0 20px 20px}
+.heat-cell{aspect-ratio:1;border-radius:3px;background:var(--bg3)}
+.heat-1{background:rgba(212,169,75,.2)}
+.heat-2{background:rgba(212,169,75,.45)}
+.heat-3{background:rgba(212,169,75,.75)}
+.heat-4{background:var(--gold)}
+
+/* CONFETTI */
+.confetti-wrap{position:fixed;inset:0;pointer-events:none;z-index:500;overflow:hidden}
+.conf-piece{position:absolute;top:-20px;width:8px;height:8px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+/* LOADING ANIMATION */
+.xp-toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);
+  background:var(--gold);color:#0D0D14;border-radius:99px;padding:8px 20px;
+  font-family:'Nunito',sans-serif;font-size:14px;font-weight:900;z-index:300;
+  transition:transform .4s cubic-bezier(.4,0,.2,1);pointer-events:none;white-space:nowrap;
+}
+.xp-toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ SCREENS ═══ -->
+  <div class="screens">
+
+    <!-- HOME -->
+    <div class="screen active" id="sc-home">
+      <div class="home-hero">
+        <div class="hero-top">
+          <div class="hero-brand">FinLingo 🪙</div>
+          <div class="hero-streak"><span class="streak-fire">🔥</span><span class="streak-count" id="h-streak">7</span></div>
+        </div>
+        <div class="hero-greeting">Good evening, Operator 👋</div>
+        <div class="hero-sub">7-day streak. You're building real edge.</div>
+        <div class="xp-block">
+          <div class="xp-row">
+            <span class="xp-badge" id="h-rank-badge">LEVEL 2 — THE ANALYST</span>
+            <span class="xp-num" id="h-xp-num">340 / 500 XP</span>
+          </div>
+          <div class="xp-track"><div class="xp-bar" id="h-xp-bar" style="width:68%"></div></div>
+        </div>
+      </div>
+
+      <div class="daily-card">
+        <div class="daily-icon">🎯</div>
+        <div class="daily-info">
+          <div class="daily-title">Daily Goal</div>
+          <div class="daily-sub">3 of 5 lessons complete</div>
+          <div class="daily-track"><div class="daily-fill" style="width:60%"></div></div>
+        </div>
+        <button class="start-btn" onclick="openQuiz(-1)">Continue</button>
+      </div>
+
+      <div class="section-label">Your Learning Paths</div>
+      <div class="cat-tabs">
+        <button class="cat-tab active" onclick="filterPaths('all',this)">All</button>
+        <button class="cat-tab" onclick="filterPaths('finance',this)">Finance</button>
+        <button class="cat-tab" onclick="filterPaths('trading',this)">Trading</button>
+        <button class="cat-tab" onclick="filterPaths('macro',this)">Macro</button>
+      </div>
+
+      <div class="path-wrap" id="path-list"></div>
+    </div>
+
+    <!-- LEARN (unit map) -->
+    <div class="screen" id="sc-learn">
+      <div class="unit-header">
+        <div class="page-title">Learn</div>
+        <div class="page-sub">Choose a unit to continue</div>
+      </div>
+      <div id="unit-chapters"></div>
+    </div>
+
+    <!-- LEXICON -->
+    <div class="screen" id="sc-lexicon">
+      <div class="page-header">
+        <div class="page-title">Lexicon</div>
+        <div class="page-sub">1,000+ finance & trading terms</div>
+      </div>
+      <div class="lex-search-wrap">
+        <input class="lex-search" type="text" placeholder="🔍  Search any term…" oninput="filterLex(this.value)" id="lex-search">
+      </div>
+      <div class="lex-filters">
+        <button class="lex-filter active" onclick="filterLexCat('',this)">All</button>
+        <button class="lex-filter" onclick="filterLexCat('macro',this)">Macro</button>
+        <button class="lex-filter" onclick="filterLexCat('markets',this)">Markets</button>
+        <button class="lex-filter" onclick="filterLexCat('banking',this)">Banking</button>
+        <button class="lex-filter" onclick="filterLexCat('corporate',this)">Corporate</button>
+        <button class="lex-filter" onclick="filterLexCat('risk',this)">Risk</button>
+        <button class="lex-filter" onclick="filterLexCat('trading',this)">Trading</button>
+      </div>
+      <div class="lex-count" id="lex-count">Showing all 26 terms (of 1,000+)</div>
+      <div class="term-list" id="term-list"></div>
+    </div>
+
+    <!-- PROFILE / BADGES -->
+    <div class="screen" id="sc-profile">
+      <div class="profile-top">
+        <div class="profile-avatar-row">
+          <div class="profile-avatar">🧑‍💼</div>
+          <div>
+            <div class="profile-name">Operator</div>
+            <div class="profile-title">🏆 The Analyst — Level 2</div>
+            <div class="profile-since">Member since May 2025</div>
+          </div>
+        </div>
+        <div class="profile-stats">
+          <div class="p-stat"><div class="p-stat-val" id="p-xp">340</div><div class="p-stat-label">Total XP</div></div>
+          <div class="p-stat"><div class="p-stat-val" id="p-streak">7</div><div class="p-stat-label">Day Streak</div></div>
+          <div class="p-stat"><div class="p-stat-val" id="p-learned">47</div><div class="p-stat-label">Terms Learned</div></div>
+        </div>
+      </div>
+      <div class="current-rank-card">
+        <div class="rank-badge-big">📊</div>
+        <div>
+          <div class="rank-level">Current Rank — Level 2</div>
+          <div class="rank-name">The Analyst</div>
+          <div class="rank-desc">You understand the language. Now you're starting to speak it fluently.</div>
+          <div class="rank-next">160 XP until Level 3: The Associate</div>
+        </div>
+      </div>
+      <div class="section-label">All 7 Ranks</div>
+      <div class="badges-grid" id="badges-grid"></div>
+      <div class="section-label">Activity (Last 90 days)</div>
+      <div class="heatmap-grid" id="heatmap"></div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- ═══ BOTTOM NAV ═══ -->
+  <nav class="bottom-nav">
+    <button class="nav-tab active" onclick="showScreen('home',this)"><span class="n-icon">🏠</span><span class="n-label">Home</span></button>
+    <button class="nav-tab" onclick="showScreen('learn',this)"><span class="n-icon">⚡</span><span class="n-label">Learn</span></button>
+    <button class="nav-tab" onclick="showScreen('lexicon',this)"><span class="n-icon">📖</span><span class="n-label">Lexicon</span></button>
+    <button class="nav-tab" onclick="showScreen('profile',this)"><span class="n-icon">🏆</span><span class="n-label">Profile</span></button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- ═══ QUIZ OVERLAY ═══ -->
+<div class="quiz-screen" id="quiz-screen">
+  <div class="quiz-header">
+    <button class="q-close" onclick="closeQuiz()">✕</button>
+    <div class="q-progress"><div class="q-prog-fill" id="q-prog" style="width:0%"></div></div>
+    <div class="q-lives" id="q-lives">❤️❤️❤️</div>
+  </div>
+  <div class="quiz-body" id="quiz-body"></div>
+  <div class="quiz-footer">
+    <div class="feedback-box" id="feedback">
+      <div class="fb-title" id="fb-title"></div>
+      <div class="fb-detail" id="fb-detail"></div>
+    </div>
+    <button class="q-action-btn btn-skip" id="q-action" onclick="qAction()">SKIP</button>
+  </div>
+</div>
+
+<!-- ═══ RESULT OVERLAY ═══ -->
+<div class="result-screen" id="result-screen">
+  <div class="result-trophy" id="r-trophy">🏆</div>
+  <div class="result-title" id="r-title">Lesson Complete!</div>
+  <div class="result-sub" id="r-sub">You're building real edge.</div>
+  <div class="result-grid">
+    <div class="r-stat"><div class="r-stat-val" id="r-xp">+50</div><div class="r-stat-label">XP Earned</div></div>
+    <div class="r-stat"><div class="r-stat-val" id="r-acc">100%</div><div class="r-stat-label">Accuracy</div></div>
+    <div class="r-stat"><div class="r-stat-val" id="r-terms">5</div><div class="r-stat-label">Terms</div></div>
+  </div>
+  <div class="result-btns">
+    <button class="btn-continue" onclick="closeResult()">Continue 🎉</button>
+    <button class="btn-again" onclick="restartQuiz()">Try Again ↺</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="xp-toast" id="xp-toast">+10 XP ⚡</div>
+<!-- CONFETTI -->
+<div class="confetti-wrap" id="confetti"></div>
+
+<script>
+// ═══════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════
+const PATHS = [
+  {id:'foundations',cat:'finance',emoji:'💰',name:'Foundations of Money',desc:'Inflation, interest, liquidity — the 7 core terms every operator must know.',color:'#D4A94B',progress:71,done:5,total:7},
+  {id:'markets',cat:'finance',emoji:'📈',name:'Markets & Instruments',desc:'Equities, bonds, derivatives — how capital flows between asset classes.',color:'#8B5CF6',progress:28,done:2,total:7},
+  {id:'centralbank',cat:'macro',emoji:'🏦',name:'Central Banking',desc:'Fed, ECB, monetary policy — what drives every market move.',color:'#3B9EE8',progress:0,done:0,total:8},
+  {id:'macro',cat:'macro',emoji:'🌍',name:'Macro Concepts',desc:'GDP, trade balances, yield curves — read the global game board.',color:'#4CAF82',progress:0,done:0,total:10},
+  {id:'corporate',cat:'finance',emoji:'⚖️',name:'Corporate Finance',desc:'EBITDA, DCF, P/E ratios — dissect any company in minutes.',color:'#E85555',progress:0,done:0,total:9},
+  {id:'ta',cat:'trading',emoji:'📊',name:'Technical Analysis',desc:'Support, resistance, chart patterns — read price action like a pro.',color:'#F5C842',progress:0,done:0,total:12},
+  {id:'ict',cat:'trading',emoji:'🧠',name:'ICT / Smart Money',desc:'Order blocks, FVGs, liquidity, kill zones — the institutional playbook.',color:'#8B5CF6',progress:0,done:0,total:10},
+  {id:'risk',cat:'trading',emoji:'🎲',name:'Risk & Derivatives',desc:'Options, futures, position sizing, VaR — quantify and control exposure.',color:'#E85555',progress:0,done:0,total:8},
+  {id:'elite',cat:'finance',emoji:'🔱',name:'Elite Concepts',desc:'Carry trades, haircuts, repo markets — the terms that separate operators. 🔒 Unlocks at Level 5.',color:'#D4A94B',progress:0,done:0,total:12,locked:true},
+];
+
+const TERMS = [
+  {name:'Inflation',cat:'macro',short:'Rise in general price levels over time',def:'The rate at which general prices for goods and services rise, eroding purchasing power. Central banks typically target ~2% annual inflation as healthy for a growing economy.',ex:'"With 8% inflation last year, €100 bought what €92 could the year before."'},
+  {name:'Interest Rate',cat:'banking',short:'Cost of borrowing money, as a percentage',def:'The percentage a lender charges a borrower for use of assets. Central banks set benchmark rates as the primary monetary policy tool — higher rates cool spending, lower rates stimulate it.',ex:'"The ECB raised rates to 4.5% to combat the 2022 inflation surge."'},
+  {name:'Liquidity',cat:'markets',short:'How quickly an asset converts to cash without price impact',def:'The degree to which an asset can be bought or sold quickly without significantly affecting its price. Cash is perfectly liquid. Real estate is illiquid — selling takes time and negotiation.',ex:'"During the crisis, market liquidity evaporated — nobody would buy the bonds at any price."'},
+  {name:'Yield Curve',cat:'macro',short:'Graph of bond yields vs. maturities',def:"A line plotting interest rates of bonds with equal credit quality but different maturity dates. An inverted yield curve — short-term rates above long-term — has preceded nearly every US recession.",ex:'"The yield curve inverted in 2022, signalling growing recession fears."'},
+  {name:'Equity',cat:'markets',short:'Ownership stake in a company',def:'Residual ownership of a company after all liabilities. Shareholders get profits after debts are paid — higher risk than debt, higher long-run return potential.',ex:'"She put €10,000 into Apple equity in 2016 and held 8 years."'},
+  {name:'Bond',cat:'markets',short:'A loan extended to a government or company',def:'A fixed income instrument representing a loan from investor to borrower. Pays periodic interest (coupon) and returns principal at maturity. Generally less risky than equities, lower expected return.',ex:'"Germany\'s 10-year Bund yields 2.3% — the European risk-free benchmark."'},
+  {name:'Derivative',cat:'risk',short:'Contract whose value derives from an underlying asset',def:'A financial instrument whose value depends on the price of an underlying — stocks, bonds, commodities, currencies, rates. Core types: options, futures, swaps, forwards.',ex:'"He hedged oil exposure using crude futures — a classic derivative instrument."'},
+  {name:'Monetary Policy',cat:'banking',short:'Central bank tools to control money supply and rates',def:'Actions by a central bank to manage money supply and achieve price stability and employment goals. Key tools: benchmark rates, open market operations, quantitative easing.',ex:'"The Fed\'s hawkish monetary policy stance in 2022 crushed growth stocks."'},
+  {name:'GDP',cat:'macro',short:'Total value of goods and services a country produces',def:"Gross Domestic Product — the total monetary value of finished goods and services produced within a country's borders. The primary measure of economic size and growth.",ex:'"Germany\'s GDP contracted 0.3% in Q1, raising recession fears."'},
+  {name:'EBITDA',cat:'corporate',short:'Earnings before interest, taxes, depreciation, amortisation',def:'A proxy for operational profitability — earnings before financing costs and accounting adjustments. Used widely to compare companies across different capital structures.',ex:'"The startup was acquired at 8× EBITDA — a €24M enterprise value."'},
+  {name:'P/E Ratio',cat:'corporate',short:'Share price divided by earnings per share',def:'How much you pay per unit of a company\'s profit. A high P/E signals high growth expectations; a low P/E may indicate undervaluation — or declining prospects.',ex:'"At 35× P/E, the market prices in years of above-average earnings growth."'},
+  {name:'DCF Valuation',cat:'corporate',short:'Present value of projected future cash flows',def:'A valuation method estimating an investment\'s present value based on projected future cash flows discounted for risk and time. The gold standard of fundamental analysis.',ex:'"His DCF valued the company at €85/share — well below the €120 market price."'},
+  {name:'Carry Trade',cat:'risk',short:'Borrow cheap, invest in a higher-yielding asset',def:'A strategy borrowing in a low-interest-rate currency and investing in a higher-yielding one. Profit = yield differential minus hedging cost. Unwinds explosively in risk-off environments.',ex:'"The JPY carry trade collapsed in August 2024 when the Bank of Japan hiked unexpectedly."'},
+  {name:'Quantitative Easing',cat:'banking',short:'Central bank asset purchases to inject liquidity',def:'A non-traditional monetary policy tool where a central bank creates money to purchase securities, injecting liquidity and lowering long-term rates when conventional tools are exhausted.',ex:'"The Fed\'s QE program expanded its balance sheet to nearly $9 trillion."'},
+  {name:'Support & Resistance',cat:'trading',short:'Price levels where buying or selling pressure concentrates',def:'Support is a price floor where buyers historically step in. Resistance is a ceiling where sellers dominate. These levels form the backbone of technical analysis and price action trading.',ex:'"BTC held support at $60K three times — each touch strengthened the level."'},
+  {name:'Order Block',cat:'trading',short:'Area of institutional buying or selling that left a price imprint',def:'A price region where smart money (institutions, banks) placed large orders, creating an imbalance. Price often returns to these zones before continuing its trend — a core ICT concept.',ex:'"The 4H bearish order block at 1.0850 on EUR/USD rejected price cleanly."'},
+  {name:'Fair Value Gap (FVG)',cat:'trading',short:'Price gap created by aggressive one-sided movement',def:'A three-candle pattern where price moves so aggressively in one direction that a gap in liquidity is created. Price frequently returns to fill this gap before continuing — an ICT / SMC entry model.',ex:'"The daily FVG from last Monday\'s news candle acted as a perfect demand zone."'},
+  {name:'Liquidity Pool',cat:'trading',short:'Cluster of stop-loss orders waiting to be swept',def:'Areas above swing highs or below swing lows where retail stop-loss orders accumulate. Institutional players drive price to these zones to trigger stops and gather the liquidity they need to fill large orders.',ex:'"Price swept the equal highs liquidity pool before reversing — a classic stop hunt."'},
+  {name:'Kill Zone',cat:'trading',short:'High-liquidity trading session windows with institutional activity',def:'Specific time windows when major financial centers are active and institutional order flow is highest. The three main ones: London Open (7–10 AM GMT), NY Open (12–3 PM GMT), London Close (4–5 PM GMT).',ex:'"He only entered trades during the NY Kill Zone — institutional volume made setups cleaner."'},
+  {name:'Market Structure',cat:'trading',short:'Pattern of highs and lows that defines trend direction',def:'The series of higher highs / higher lows (uptrend) or lower highs / lower lows (downtrend). A Break of Structure (BOS) signals potential trend continuation; a Change of Character (CHoCH) signals reversal.',ex:'"After the CHoCH on the 1H chart, he flipped bearish and looked for shorts."'},
+  {name:'Risk/Reward Ratio',cat:'trading',short:'Potential profit vs. potential loss on a trade',def:'The ratio of expected profit to expected loss on a trade. A 3:1 R/R means risking €100 to make €300. Most professional traders require minimum 2:1 or 3:1 before entering a position.',ex:'"He passed on the setup — the R/R was only 1.2:1, below his minimum threshold."'},
+  {name:'Position Sizing',cat:'trading',short:'How much capital to allocate per trade based on risk rules',def:'The process of calculating how many units/contracts to trade based on account size and predetermined risk per trade. Core formula: (Account × Risk%) ÷ (Entry − Stop Loss) = Position Size.',ex:'"With a 1% risk rule on a €10,000 account, he risked €100 per trade — exactly 20 shares."'},
+  {name:'Candlestick Pattern',cat:'trading',short:'Visual price action formation signalling potential reversal or continuation',def:'Recurring formations in candlestick charts that traders use to anticipate future price movement. Common patterns: Doji (indecision), Engulfing (reversal), Hammer (bullish reversal), Shooting Star (bearish reversal).',ex:'"The bearish engulfing at the daily resistance gave him high-confidence short entry."'},
+  {name:'Fibonacci Retracement',cat:'trading',short:'Horizontal levels based on Fibonacci ratios used to find pullback entries',def:'A technical tool using Fibonacci ratios (23.6%, 38.2%, 50%, 61.8%, 78.6%) to identify potential support/resistance levels during price retracements. The 61.8% (Golden Ratio) is considered the most powerful.',ex:'"Price pulled back to the 62% Fib level before continuing the uptrend."'},
+  {name:'Repo Market',cat:'risk',short:'Short-term borrowing secured by collateral',def:"The repurchase agreement market — where institutions borrow overnight cash by selling securities with a contractual agreement to repurchase them the next day. The lifeblood of short-term institutional funding.",ex:'"Stress in the repo market in September 2019 forced the Fed to intervene with overnight operations."'},
+  {name:'Quantitative Tightening',cat:'banking',short:'Central bank reducing its balance sheet',def:'The opposite of QE — a central bank allows maturing securities to roll off its balance sheet (or actively sells assets), reducing money supply and tightening financial conditions. Typically raises long-term rates.',ex:'"The Fed\'s QT program removed over $1T from markets in 2023, pressuring bond prices."'},
+];
+
+const QUESTIONS = [
+  {a:"Did you see the Fed announcement? They're hiking rates again.",b:"With <span class='hl'>inflation</span> still at 6%, they had no choice. Higher rates cool spending.",q:"What does 'inflation' mean in this context?",choices:["The stock market rising in price","A sustained rise in general prices, eroding purchasing power","A currency gaining strength vs. others","Government debt increasing over time"],correct:1,explain:"Inflation is the rate at which prices rise across the economy, reducing how much your money can buy. Central banks raise rates to make borrowing expensive, slowing spending and cooling price rises."},
+  {a:"I analysed their valuation — the <span class='hl'>P/E ratio</span> is 45×. That's steep.",b:"Yeah, but if they hit their growth targets it could justify it. What does your DCF say?",q:"What does a 45× P/E ratio tell you?",choices:["The company earns a 45% net profit margin","You pay €45 for every €1 of annual earnings","The stock has risen 45% this year","45 analyst firms cover the stock"],correct:1,explain:"P/E (Price-to-Earnings) tells you how much you pay per unit of profit. 45× means the market pays €45 for every €1 the company earns annually — implying high future growth expectations."},
+  {a:"The <span class='hl'>yield curve</span> just inverted. Everyone's nervous.",b:"They should be. Historically that's preceded almost every US recession in the past 50 years.",q:"What is a yield curve inversion?",choices:["When stock prices fall faster than bonds","When short-term interest rates exceed long-term rates","When the central bank cuts rates unexpectedly","When inflation exceeds nominal GDP growth"],correct:1,explain:"Normally long-term bonds yield more than short-term ones. Inversion — short rates above long rates — signals markets expect economic trouble ahead and eventual rate cuts to stimulate growth."},
+  {a:"Price swept the <span class='hl'>liquidity pool</span> above those equal highs before reversing hard.",b:"Classic stop hunt. Smart money needed the buy-side liquidity to fill their shorts at scale.",q:"What is a liquidity pool in trading?",choices:["A pool of capital from retail investors","A cluster of stop-loss orders above highs or below lows that institutions target","The total trading volume in a session","A reserve of capital a broker keeps on hand"],correct:1,explain:"Liquidity pools form where retail traders cluster their stop-losses — typically above swing highs or below swing lows. Institutional players drive price into these zones to trigger stops, gathering the liquidity needed to fill large orders before reversing."},
+  {a:"I only enter during the <span class='hl'>NY Kill Zone</span>. Outside that, I watch.",b:"Smart. The institutional flow during those 3 hours is where 80% of the real moves happen.",q:"What defines a Kill Zone in ICT / SMC trading?",choices:["A chart pattern indicating a trend reversal","A high-liquidity time window when institutional order flow is highest","A stop-loss level placed below a key support","The overlap between two opposing chart patterns"],correct:1,explain:"Kill Zones are specific time windows tied to major financial center openings — London (7–10 AM GMT), New York (12–3 PM GMT), London Close (4–5 PM GMT). Institutional flow is concentrated here, producing the highest-quality setups."},
+  {a:"After the <span class='hl'>CHoCH</span> on the 4H chart I flipped completely bearish.",b:"Makes sense — once structure shifts, you don't fight it. Higher timeframe confirmation too?",q:"What does CHoCH stand for and what does it signal?",choices:["Chart of Changes — a technical pattern used in macro analysis","Change of Character — price breaks the previous trend structure, signalling a potential reversal","Central House of Clearing — an institutional settlement system","Cumulative High Over Close High — a momentum indicator"],correct:1,explain:"CHoCH (Change of Character) occurs when price breaks a key swing point that breaks the existing market structure — e.g. in an uptrend, breaking a prior higher low. It signals the trend may be reversing and traders flip bias."},
+  {a:"His <span class='hl'>EBITDA</span> margin hit 34% this quarter. Strong for the sector.",b:"Agreed — but check free cash flow too. EBITDA ignores capital expenditure completely.",q:"What does EBITDA specifically measure?",choices:["Total revenue after all expenses including taxes","Operational profit before financing costs and accounting adjustments","Cash available to distribute to shareholders","Earnings adjusted for one-time items only"],correct:1,explain:"EBITDA strips out interest (financing), taxes (jurisdiction), depreciation and amortisation (accounting) to show raw operational profitability. It's the most common cross-company comparison metric precisely because it normalises capital structure differences."},
+  {a:"They funded the acquisition using a <span class='hl'>carry trade</span> from JPY into EUR bonds.",b:"Risky. If the yen strengthens suddenly, the whole structure unwinds catastrophically fast.",q:"What is a carry trade?",choices:["Buying commodities to hedge against inflation","Borrowing in a low-rate currency to invest in a higher-yielding one","Carrying tax losses forward to offset future gains","Transferring assets between exchanges for arbitrage profit"],correct:1,explain:"A carry trade profits from the rate differential: borrow where rates are low (e.g. JPY at 0.1%), invest where they're higher (e.g. EUR bonds at 4%). The risk — if the cheap-borrow currency strengthens, the debt becomes expensive and the trade violently unwinds."},
+];
+
+const BADGES = [
+  {level:1,name:'The Novice',emoji:'🌱',desc:'You\'ve entered the arena.',xp:0,u:true},
+  {level:2,name:'The Analyst',emoji:'📊',desc:'You understand the language.',xp:200,u:true},
+  {level:3,name:'The Associate',emoji:'📈',desc:'You can read a market.',xp:500,u:false},
+  {level:4,name:'The Strategist',emoji:'⚔️',desc:'You think in systems.',xp:1000,u:false},
+  {level:5,name:'The Director',emoji:'🏛️',desc:'Capital moves with your read.',xp:2000,u:false},
+  {level:6,name:'The Principal',emoji:'🔱',desc:'You sit at the table.',xp:3500,u:false},
+  {level:7,name:'The Operator',emoji:'🌐',desc:'You see what others miss.',xp:5000,u:false},
+];
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let G = {
+  xp:340, streak:7, learned:47,
+  qIdx:0, hearts:3, correct:0, answered:false,
+  currentAnswerCorrect:false,
+  qPhase:'question', // question | feedback | next
+};
+let currentLexCat = '';
+
+// ═══════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════
+function showScreen(name, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sc-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  if (name === 'lexicon') renderLex(TERMS);
+  if (name === 'learn') renderLearn();
+  if (name === 'profile') { renderBadges(); renderHeatmap(); }
+}
+
+// ═══════════════════════════════════════
+// HOME / PATHS
+// ═══════════════════════════════════════
+function filterPaths(cat, el) {
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const filtered = cat === 'all' ? PATHS : PATHS.filter(p => p.cat === cat);
+  renderPaths(filtered);
+}
+
+function renderPaths(paths) {
+  document.getElementById('path-list').innerHTML = paths.map(p => {
+    const locked = p.locked ? '<span class="pill pill-gold" style="margin-top:6px;display:inline-flex">🔒 Level 5</span>' : '';
+    return `<div class="path-card" onclick="${p.locked ? '' : 'openQuiz(-1)'}">
+      <div class="path-glow" style="background:${p.color}"></div>
+      <div class="path-top">
+        <div class="path-emoji">${p.emoji}</div>
+        <div class="path-info">
+          <div class="path-name">${p.name}</div>
+          <div class="path-desc">${p.desc}</div>
+        </div>
+      </div>
+      ${locked}
+      <div class="path-bar"><div class="path-fill" style="width:${p.progress}%;background:${p.color}"></div></div>
+      <div class="path-meta">
+        <span class="path-lessons">${p.done}/${p.total} lessons</span>
+        <span class="path-pct" style="color:${p.color}">${p.locked ? '🔒' : p.progress + '%'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// LEARN / UNIT MAP
+// ═══════════════════════════════════════
+function renderLearn() {
+  const chapters = [
+    {
+      banner:'💰 Finance Fundamentals', sub:'Chapters 1–4 · Build your base',
+      color:'var(--gold)',
+      units:[
+        {e:'💰',done:true},{e:'📊',done:true},{e:'💹',done:true},{e:'💳',done:true},{e:'🏛️',done:true},
+        {e:'🧾',current:true},{e:'📉',locked:true},'chest',{e:'🌍',locked:true},{e:'⚖️',locked:true}
+      ]
+    },
+    {
+      banner:'📊 Trading Mastery', sub:'Chapters 5–9 · Price action & edge',
+      color:'var(--gold2)',
+      units:[
+        {e:'📈',locked:true},{e:'🎯',locked:true},{e:'🧠',locked:true},{e:'🔵',locked:true},
+        'chest',{e:'⏰',locked:true},{e:'🎲',locked:true},{e:'🔱',locked:true}
+      ]
+    }
+  ];
+  document.getElementById('unit-chapters').innerHTML = chapters.map(ch => {
+    const offsets = [0,40,60,40,0,-40,-60,-40,0,40];
+    const rows = ch.units.map((u,i) => {
+      const offset = (offsets[i % offsets.length] || 0);
+      if (u === 'chest') return `<div class="unit-node-row" style="margin-left:${offset}px"><div class="chest-node" onclick="openQuiz(-1)" title="Bonus chest">🪙</div></div>`;
+      const cls = u.done ? 'done' : u.current ? 'current' : 'locked';
+      const check = u.done ? '<div class="node-check">✓</div>' : '';
+      return `<div class="unit-node-row" style="margin-left:${offset}px">
+        <div class="unit-node ${cls}" onclick="${u.locked ? '' : 'openQuiz(-1)'}" title="${u.e}">
+          ${u.e}${check}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="unit-chapter">
+      <div class="chapter-banner" style="background:linear-gradient(90deg,var(--bg4),var(--bg3))">
+        <div class="chapter-icon">${ch.units[0].e || '📚'}</div>
+        <div><div class="chapter-title">${ch.banner}</div><div class="chapter-sub">${ch.sub}</div></div>
+      </div>
+      <div class="unit-map">${rows}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════
+function openQuiz() {
+  G.qIdx = 0; G.hearts = 3; G.correct = 0; G.answered = false; G.qPhase = 'question';
+  document.getElementById('quiz-screen').classList.add('active');
+  document.getElementById('result-screen').classList.remove('active');
+  renderQuestion();
+}
+function closeQuiz() {
+  document.getElementById('quiz-screen').classList.remove('active');
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[G.qIdx];
+  const pct = (G.qIdx / QUESTIONS.length) * 100;
+  document.getElementById('q-prog').style.width = pct + '%';
+  let lives = '';
+  for (let i=0;i<3;i++) lives += i < G.hearts ? '❤️' : '🖤';
+  document.getElementById('q-lives').innerHTML = lives;
+  document.getElementById('feedback').className = 'feedback-box';
+  G.answered = false;
+
+  const btn = document.getElementById('q-action');
+  btn.className = 'q-action-btn btn-skip';
+  btn.textContent = 'SKIP';
+
+  const letters = ['A','B','C','D'];
+  document.getElementById('quiz-body').innerHTML = `
+    <div class="q-type-label">💬 What does the highlighted term mean?</div>
+    <div class="convo-card">
+      <div class="convo-label">Read the conversation</div>
+      <div class="convo">
+        <div class="bubble-row"><div class="avatar av-a">A</div><div class="bubble">${q.a}</div></div>
+        <div class="bubble-row right"><div class="avatar av-b">B</div><div class="bubble">${q.b}</div></div>
+      </div>
+    </div>
+    <div class="q-prompt">${q.q}</div>
+    <div class="choices-list">
+      ${q.choices.map((c,i) => `
+        <button class="choice-btn" id="cb${i}" onclick="pickAnswer(${i})">
+          <span class="choice-letter">${letters[i]}</span>${c}
+        </button>`).join('')}
+    </div>`;
+}
+
+function pickAnswer(i) {
+  if (G.answered) return;
+  G.answered = true;
+  G.qPhase = 'feedback';
+  const q = QUESTIONS[G.qIdx];
+  const ok = i === q.correct;
+  G.currentAnswerCorrect = ok;
+
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+  document.getElementById('cb'+i).classList.add(ok ? 'correct' : 'wrong');
+  if (!ok) {
+    document.getElementById('cb'+q.correct).classList.add('correct');
+    G.hearts--;
+  } else {
+    G.correct++;
+    G.xp += 10;
+    G.learned++;
+    showToast('+10 XP ⚡');
+    updateStats();
+  }
+
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback-box show ' + (ok ? 'ok' : 'fail');
+  document.getElementById('fb-title').textContent = ok ? '✅ Correct!' : '❌ Not quite';
+  document.getElementById('fb-detail').textContent = q.explain;
+
+  const btn = document.getElementById('q-action');
+  btn.className = 'q-action-btn ' + (ok ? 'btn-next-ok' : 'btn-next-fail');
+  btn.textContent = ok ? 'CONTINUE' : 'GOT IT';
+}
+
+function qAction() {
+  if (!G.answered) {
+    // skip
+    G.answered = true;
+    G.hearts--;
+    const q = QUESTIONS[G.qIdx];
+    document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+    document.getElementById('cb'+q.correct).classList.add('correct');
+    const fb = document.getElementById('feedback');
+    fb.className = 'feedback-box show fail';
+    document.getElementById('fb-title').textContent = '⏭️ Skipped';
+    document.getElementById('fb-detail').textContent = q.explain;
+    const btn = document.getElementById('q-action');
+    btn.className = 'q-action-btn btn-next-fail';
+    btn.textContent = 'GOT IT';
+    return;
+  }
+  G.qIdx++;
+  if (G.qIdx >= QUESTIONS.length || G.hearts <= 0) {
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResult() {
+  document.getElementById('quiz-screen').classList.remove('active');
+  const rs = document.getElementById('result-screen');
+  rs.classList.add('active');
+  const perfect = G.correct === QUESTIONS.length;
+  const acc = Math.round((G.correct / QUESTIONS.length) * 100);
+  document.getElementById('r-trophy').textContent = perfect ? '🏆' : G.correct >= 5 ? '⚡' : G.correct >= 3 ? '📊' : '📚';
+  document.getElementById('r-title').textContent = perfect ? 'Perfect Score!' : G.correct >= 5 ? 'Excellent Work!' : G.correct >= 3 ? 'Good Progress!' : 'Keep Practising';
+  document.getElementById('r-sub').textContent = perfect ? 'Flawless. You operate differently.' : 'Every session compounds. Consistency is the edge.';
+  document.getElementById('r-xp').textContent = '+' + (G.correct * 10);
+  document.getElementById('r-acc').textContent = acc + '%';
+  document.getElementById('r-terms').textContent = G.correct;
+  if (perfect) spawnConfetti();
+}
+
+function closeResult() {
+  document.getElementById('result-screen').classList.remove('active');
+}
+
+function restartQuiz() {
+  document.getElementById('result-screen').classList.remove('active');
+  openQuiz();
+}
+
+// ═══════════════════════════════════════
+// LEXICON
+// ═══════════════════════════════════════
+function renderLex(terms) {
+  document.getElementById('lex-count').textContent = `Showing ${terms.length} terms (of 1,000+)`;
+  document.getElementById('term-list').innerHTML = terms.map((t,i) => `
+    <div class="term-item" id="ti${i}" onclick="toggleTerm(${i})">
+      <div class="term-head">
+        <div>
+          <div class="term-name">${t.name}</div>
+        </div>
+        <div class="term-right">
+          <span class="cat-chip cat-${t.cat}">${t.cat}</span>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="term-body">
+        <div class="term-body-inner">
+          <div class="term-short" style="font-size:12px;color:var(--text2);padding-top:4px;margin-bottom:4px">${t.short}</div>
+          <div class="term-def">${t.def}</div>
+          <div class="term-ex">${t.ex}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleTerm(i) {
+  document.getElementById('ti'+i).classList.toggle('open');
+}
+
+function filterLex(val) {
+  const q = val.toLowerCase().trim();
+  const terms = q ? TERMS.filter(t =>
+    t.name.toLowerCase().includes(q) ||
+    t.def.toLowerCase().includes(q) ||
+    t.short.toLowerCase().includes(q)
+  ) : (currentLexCat ? TERMS.filter(t => t.cat === currentLexCat) : TERMS);
+  renderLex(terms);
+}
+
+function filterLexCat(cat, el) {
+  currentLexCat = cat;
+  document.querySelectorAll('.lex-filter').forEach(f => f.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('lex-search').value = '';
+  renderLex(cat ? TERMS.filter(t => t.cat === cat) : TERMS);
+}
+
+// ═══════════════════════════════════════
+// PROFILE / BADGES
+// ═══════════════════════════════════════
+function renderBadges() {
+  document.getElementById('badges-grid').innerHTML = BADGES.map(b => `
+    <div class="b-tile ${b.u ? 'unlocked' : 'locked'}">
+      <div class="b-tile-icon">${b.emoji}</div>
+      <div class="b-tile-name">${b.name}</div>
+      <div class="b-tile-xp">Lv.${b.level}${!b.u ? ' 🔒' : ''}</div>
+    </div>`).join('');
+}
+
+function renderHeatmap() {
+  const cells = [];
+  for (let i=0;i<90;i++) {
+    const r = Math.random();
+    const cls = r > .85 ? 'heat-4' : r > .65 ? 'heat-3' : r > .45 ? 'heat-2' : r > .25 ? 'heat-1' : '';
+    cells.push(`<div class="heat-cell ${cls}"></div>`);
+  }
+  document.getElementById('heatmap').innerHTML = cells.join('');
+}
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function updateStats() {
+  document.getElementById('h-xp-num').textContent = G.xp + ' / 500 XP';
+  const pct = Math.min(Math.max(((G.xp - 200) / 300) * 100, 0), 100);
+  document.getElementById('h-xp-bar').style.width = pct + '%';
+  document.getElementById('h-streak').textContent = G.streak;
+  if (document.getElementById('p-xp')) {
+    document.getElementById('p-xp').textContent = G.xp;
+    document.getElementById('p-streak').textContent = G.streak;
+    document.getElementById('p-learned').textContent = G.learned;
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('xp-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function spawnConfetti() {
+  const wrap = document.getElementById('confetti');
+  wrap.innerHTML = '';
+  const colors = ['#D4A94B','#F5C842','#4CAF82','#8B5CF6','#3B9EE8','#E85555','#fff'];
+  for (let i=0;i<60;i++) {
+    const el = document.createElement('div');
+    el.className = 'conf-piece';
+    el.style.left = Math.random()*100 + 'vw';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.animationDuration = (Math.random()*2+1.5) + 's';
+    el.style.animationDelay = Math.random()*1 + 's';
+    el.style.transform = 'rotate(' + Math.random()*360 + 'deg)';
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+renderPaths(PATHS);
+renderLex(TERMS);
+renderBadges();
+renderHeatmap();
+renderLearn();
+</script>
+</body>
+</html>
